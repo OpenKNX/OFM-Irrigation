@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-model href="../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<KNX xmlns="http://knx.org/xml/project/20"
+  xmlns:op="http://github.com/OpenKNX/OpenKNXproducer">
+
+  <op:config name="%IRR_NumChannelsDefault%" value="%N%" />
+
+  <ManufacturerData>
+    <Manufacturer RefId="M-00FA">
+      <ApplicationPrograms>
+        <ApplicationProgram Id="%AID%" ApplicationNumber="0" ApplicationVersion="0" ProgramType="ApplicationProgram" MaskVersion="MV-07B0" Name="Wirdüberschrieben" LoadProcedureStyle="MergedProcedure" PeiType="0" DefaultLanguage="de" DynamicTableManagement="false" Linkable="true" MinEtsVersion="4.0">
+          <Static>
+            <ParameterTypes>
+              <ParameterType Id="%AID%_PT-IRRNumChannels" Name="IRRNumChannels">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="1" maxInclusive="%N%" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-IRRChannelActive" Name="ChannelActive">
+                <TypeRestriction Base="Value" SizeInBit="2">
+                  <Enumeration Text="Inaktiv" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Aktiv" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Funktionslos" Value="2" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-IRRYesNo" Name="IRRYesNo">
+                <TypeRestriction Base="Value" SizeInBit="1">
+                  <Enumeration Text="Nein" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Ja, über KO" Value="1" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-IRRNiederschlagsrate" Name="IRRNiederschlagsrate">
+                <TypeNumber SizeInBit="16" Type="unsignedInt" minInclusive="0" maxInclusive="500" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-IRRSchwellwert" Name="IRRSchwellwert">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="100" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-IRRnFK" Name="IRRnFK">
+                <TypeNumber SizeInBit="16" Type="unsignedInt" minInclusive="0" maxInclusive="1000" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-IRRKc" Name="IRRKc">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="100" />
+              </ParameterType>
+            </ParameterTypes>
+            <Parameters>
+              <Parameter Id="%AID%_P-%TT%00002" Name="CheckForOneChannel" ParameterType="%AID%_PT-CheckBox" Text="" Value="1" Access="None" />
+              <Union SizeInBit="8">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00001" Name="VisibleChannels" ParameterType="%AID%_PT-IRRNumChannels" Offset="0" BitOffset="0" Text="Verfügbare Kanäle" Value="%IRR_NumChannelsDefault%" SuffixText=" von %N%" />
+                <!-- 7 bits free -->
+              </Union>
+            </Parameters>
+            <ParameterRefs>
+              <ParameterRef Id="%AID%_UP-%TT%00001_R-%TT%0000101" RefId="%AID%_UP-%TT%00001" /> <!-- VisibleChannels -->
+              <ParameterRef Id="%AID%_P-%TT%00002_R-%TT%0000201" RefId="%AID%_P-%TT%00002" /> <!-- CheckForOneChannel -->
+            </ParameterRefs>    
+            <ComObjectTable>
+              <ComObject Id="%AID%_O-%TT%00100" Name="Berechnung_ET0"            FunctionText="Global Ausgang"  Text="Berechnung ET0 [mm/Tag]"         Number="1000" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
+              <ComObject Id="%AID%_O-%TT%00101" Name="Temperatur_Wetterstation"     FunctionText="Global Eingang:" Text="Aktuelle Temperatur"             Number="1001" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+              <ComObject Id="%AID%_O-%TT%00102" Name="Regenmenge_Wetterstation"     FunctionText="Global Eingang:" Text="Regenmenge heute"                Number="1002" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
+              <ComObject Id="%AID%_O-%TT%00103" Name="GlobaleFreigabe" FunctionText="Global Eingang:" Text="Globale Freigabe Bewässerung"   Number="1003" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%00104" Name="TDurchschnittHeute" FunctionText="Global Ausgang:" Text="Berechnung Durchschnittstemperatur heute"    Number="1004" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+              <ComObject Id="%AID%_O-%TT%00105" Name="TDurchschnittGestern" FunctionText="Global Ausgang:" Text="Berechnung Durchschnittstemperatur gestern" Number="1005" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+              <ComObject Id="%AID%_O-%TT%00106" Name="TMaxHeute" FunctionText="Global Ausgang:" Text="Berechnung Temperatur max heute" Number="1006" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+              <ComObject Id="%AID%_O-%TT%00107" Name="TMinHeute" FunctionText="Global Ausgang:" Text="Berechnung Temperatur min heute" Number="1007" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+              <ComObject Id="%AID%_O-%TT%00108" Name="TMaxGestern" FunctionText="Global Ausgang:" Text="Berechnung Temperatur max gestern" Number="1008" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+              <ComObject Id="%AID%_O-%TT%00109" Name="TMinGestern" FunctionText="Global Ausgang:" Text="Berechnung Temperatur min gestern" Number="1009" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+            </ComObjectTable>
+            <ComObjectRefs>
+              <ComObjectRef Id="%AID%_O-%TT%00100_R-%TT%0010001" RefId="%AID%_O-%TT%00100" />              <!-- ET0 -->
+              <ComObjectRef Id="%AID%_O-%TT%00101_R-%TT%0010101" RefId="%AID%_O-%TT%00101" />              <!-- Temperatur -->
+              <ComObjectRef Id="%AID%_O-%TT%00102_R-%TT%0010201" RefId="%AID%_O-%TT%00102" />              <!-- Regenmenge -->
+              <ComObjectRef Id="%AID%_O-%TT%00103_R-%TT%0010301" RefId="%AID%_O-%TT%00103" />              <!-- GlobaleFreigabe -->
+              <ComObjectRef Id="%AID%_O-%TT%00104_R-%TT%0010401" RefId="%AID%_O-%TT%00104" />              <!-- TDurchschnittHeute -->
+              <ComObjectRef Id="%AID%_O-%TT%00105_R-%TT%0010501" RefId="%AID%_O-%TT%00105" />              <!-- TDurchschnittGestern -->
+              <ComObjectRef Id="%AID%_O-%TT%00106_R-%TT%0010601" RefId="%AID%_O-%TT%00106" />              <!-- TMaxHeute -->
+              <ComObjectRef Id="%AID%_O-%TT%00107_R-%TT%0010701" RefId="%AID%_O-%TT%00107" />              <!-- TMinHeute -->
+              <ComObjectRef Id="%AID%_O-%TT%00108_R-%TT%0010801" RefId="%AID%_O-%TT%00108" />              <!-- TMaxGestern -->
+              <ComObjectRef Id="%AID%_O-%TT%00109_R-%TT%0010901" RefId="%AID%_O-%TT%00109" />              <!-- TMinGestern -->
+            </ComObjectRefs>
+          </Static>
+
+
+          <Dynamic>
+            <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="Irrigation" Icon="water-circle">
+              <ParameterBlock Id="%AID%_PB-nnn" Name="Settings" Text="Allgemein" Icon="cog-outline" ShowInComObjectTree="true">
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Irrigation Version %ModuleVersion%" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
+
+                <ParameterRefRef RefId="%AID%_P-%TT%00002_R-%TT%0000201" /> <!-- CheckForOneChannel -->
+                <choose ParamRefId="%AID%_P-%TT%00002_R-%TT%0000201"> <!-- CheckForOneChannel -->
+                  <when test="!=%N%">
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Kanalauswahl" UIHint="Headline" />
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00001_R-%TT%0000101" HelpContext="BASE-Verfuegbare-Kanaele" IndentLevel="1" />
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
+                  </when>
+                  <when test="%N%">
+                    <Assign TargetParamRefRef="%AID%_UP-%TT%00001_R-%TT%0000101" Value="1" /> <!-- VisibleChannels -->
+                  </when>
+                </choose>
+              </ParameterBlock>
+              <op:include href="Irrigation.templ.xml" xpath="//ApplicationProgram/Dynamic/ChannelIndependentBlock/*" type="template" prefix="IRR" IsInner="true" />
+            
+                          <!-- globale KOs -->
+              <ComObjectRefRef RefId="%AID%_O-%TT%00100_R-%TT%0010001" />              <!-- ET0 -->
+              <ComObjectRefRef RefId="%AID%_O-%TT%00101_R-%TT%0010101" />              <!-- Temperatur -->
+              <ComObjectRefRef RefId="%AID%_O-%TT%00102_R-%TT%0010201" />              <!-- Regenmenge -->
+              <ComObjectRefRef RefId="%AID%_O-%TT%00103_R-%TT%0010301" />              <!-- GlobaleFreigabe -->
+              <ComObjectRefRef RefId="%AID%_O-%TT%00104_R-%TT%0010401" />              <!-- TDurchschnittHeute -->
+              <ComObjectRefRef RefId="%AID%_O-%TT%00105_R-%TT%0010501" />              <!-- TDurchschnittGestern -->
+              <ComObjectRefRef RefId="%AID%_O-%TT%00106_R-%TT%0010601" />              <!-- TMaxHeute -->
+              <ComObjectRefRef RefId="%AID%_O-%TT%00107_R-%TT%0010701" />              <!-- TMinHeute -->
+              <ComObjectRefRef RefId="%AID%_O-%TT%00108_R-%TT%0010801" />              <!-- TMaxGestern -->
+              <ComObjectRefRef RefId="%AID%_O-%TT%00109_R-%TT%0010901" />              <!-- TMinGestern -->
+            </Channel>
+          </Dynamic>
+
+        <!--
+          <Dynamic ALT>
+            <Channel Id="%AID%_CH-5" Name="Standard" Number="5" Text="Bewässerungszonen">
+              <ParameterBlock Id="%AID%_PB-xxx" Name="Bewässerungszonen" Text="Bewässerungszonen" Icon="water-circle" HelpContext="IRR-Bewaesserungszonen" ShowInComObjectTree="true">
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Bewässerungszonen" UIHint="Headline" />
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Table" Text="#">
+                  <Rows>
+                    <op:include href="Bewaesserung.templ.xml" xpath="//Dynamic/Channel/ParameterBlock[@Name='Row-List']/Rows/*" type="template" prefix="IRR" IsInner="true" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="60%" Text="Beschreibung der Zone" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="40%" Text="Funktion" />
+                  </Columns>
+                  <op:include href="Bewaesserung.templ.xml" xpath="//Dynamic/Channel/ParameterBlock[@Name='Channel-List']/*" type="template" prefix="IRR" IsInner="true" />
+                </ParameterBlock>
+                <op:include href="Bewaesserung.templ.xml" xpath="//Dynamic/ChannelIndependentBlock/*" type="template" prefix="IRR" IsInner="true" />
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Verwendeter Breitengrad (Geraetestandort): siehe Common Parameter Geraetestandort." UIHint="Information" />
+              </ParameterBlock>
+
+           
+              <ComObjectRefRef RefId="%AID%_O-%TT%00100_R-%TT%0010001" />            
+              <ComObjectRefRef RefId="%AID%_O-%TT%00101_R-%TT%0010101" />            
+              <ComObjectRefRef RefId="%AID%_O-%TT%00102_R-%TT%0010201" />            
+              <ComObjectRefRef RefId="%AID%_O-%TT%00103_R-%TT%0010301" />            
+              <ComObjectRefRef RefId="%AID%_O-%TT%00104_R-%TT%0010401" />            
+              <ComObjectRefRef RefId="%AID%_O-%TT%00105_R-%TT%0010501" />            
+              <ComObjectRefRef RefId="%AID%_O-%TT%00106_R-%TT%0010601" />            
+              <ComObjectRefRef RefId="%AID%_O-%TT%00107_R-%TT%0010701" />            
+              <ComObjectRefRef RefId="%AID%_O-%TT%00108_R-%TT%0010801" />            
+              <ComObjectRefRef RefId="%AID%_O-%TT%00109_R-%TT%0010901" />            
+            </Channel>
+          </Dynamic> -->
+        </ApplicationProgram>
+      </ApplicationPrograms>
+      <Baggages>
+        <Baggage TargetPath="" Name="Help_de.zip" Id="%FILE-HELP-de%">
+          <FileInfo TimeInfo="%DATETIME%" />
+        </Baggage>
+        <Baggage TargetPath="" Name="Icons.zip" Id="%FILE-ICONS%">
+          <FileInfo TimeInfo="%DATETIME%" />
+        </Baggage>
+      </Baggages>
+    </Manufacturer>
+  </ManufacturerData>
+</KNX>

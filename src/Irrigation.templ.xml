@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-model href="../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
+  <ManufacturerData>
+    <Manufacturer RefId="M-00FA">
+      <ApplicationPrograms>
+        <ApplicationProgram Id="%AID%" ProgramType="ApplicationProgram" MaskVersion="MV-07B0" Name="AMP" LoadProcedureStyle="MergedProcedure" PeiType="0" DefaultLanguage="de" DynamicTableManagement="false" Linkable="true" MinEtsVersion="6.0" ApplicationNumber="0" ApplicationVersion="0" ReplacesVersions="0">
+          <!-- %C% enthält die aktuelle Kanalnummer (Channel).  
+          In der Praxis kommt %C% innerhalb von Texten zum tragen, %CCC% bei der Berechnung von ETS-Ids.
+          Share -> Sachen für alle Kanäle
+          Templ -> ein Kanal
+
+          %N% Anzahl Kanäle
+          %MID% Memory Segment
+          %TT% Modultype
+          -->
+          <Static>
+            <Parameters>
+               <!-- Kanalname und -nummer (kein Speicher nötig) -->
+              <Parameter Id="%AID%_P-%TT%%CC%001" Name="Ch%C%Name" ParameterType="%AID%_PT-Text40Byte" Text="Beschreibung der Zone" Value="" />
+              <Parameter Id="%AID%_P-%TT%%CC%002" Name="Ch%C%Number" ParameterType="%AID%_PT-ValueDpt5" Text="Nummer des Zone" Value="%C%" Access="None" />
+              
+            
+           <!-- Memory Layout
+              Union SizeInBit="48" (6 Bytes, Offset 0-8)
+                ├── Byte 0: Flags-A (Active, KOs anaus)
+                ├── Byte 1: Niederschlagsrate
+                ├── Byte 2: SchwellwertValue
+                ├── Byte 3: Nutzbare Feldkapazität
+                ├── Byte 4: Kc-Faktor
+                ├── Byte 5: leer
+                  -->
+              <Union SizeInBit="48">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
+
+                <!-- Byte 0: Flags-A -->
+                <!-- 2 Bit: Kanalaktivität (Werte 0/1/2) -->
+                <Parameter Id="%AID%_UP-%TT%%CC%003" Name="Ch%C%Active"          ParameterType="%AID%_PT-IRRChannelActive" Text="Kanalaktivität"  Offset="0" BitOffset="0"   Value="0" />
+                <!-- 4x 1 Bit -->
+                <Parameter Id="%AID%_UP-%TT%%CC%004" Name="CH%C%NiederschlagsrateViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="Niederschlagsrate über KO vorgeben?" Offset="0" BitOffset="0" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%006" Name="CH%C%SchwellwertViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="Schwellwert über KO vorgeben?" Offset="0" BitOffset="1" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%008" Name="CH%C%nFKViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="nFK über KO vorgeben?" Offset="0" BitOffset="2" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%010" Name="CH%C%KcViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="Kc über KO vorgeben?" Offset="0" BitOffset="3" Value="0" />
+                <!-- Bit6 und Bit7: reserviert -->
+
+                <!-- Byte 1: Niederschlagsrate -->  
+                <Parameter Id="%AID%_UP-%TT%%CC%005" Name="CH%C%NiederschlagsrateValue" ParameterType="%AID%_PT-IRRNiederschlagsrate" Text="Niederschlagsrate der Zone [mm/h]" Offset="1" BitOffset="0" Value="100" />
+                <!-- Byte 2: SchwellwertValue -->  
+                <Parameter Id="%AID%_UP-%TT%%CC%007" Name="CH%C%SchwellwertValue" ParameterType="%AID%_PT-IRRSchwellwert" Text="Bewässerungsschwelle [%]" Offset="2" BitOffset="0" Value="50" />
+                <!-- Byte 3: Nutzbare Feldkapazität -->  
+                <Parameter Id="%AID%_UP-%TT%%CC%009" Name="CH%C%nFKValue" ParameterType="%AID%_PT-IRRnFK" Text="Nutzbare Feldkapazität (nFK) [mm]" Offset="3" BitOffset="0" Value="250" />
+                <!-- Byte 4: Kc-Faktor -->  
+                <Parameter Id="%AID%_UP-%TT%%CC%011" Name="CH%C%KcValue" ParameterType="%AID%_PT-IRRKc" Text="Kc-Faktor der Zone" Offset="4" BitOffset="0" Value="80" />
+                <!-- Byte 5: leer --> 
+              </Union>
+            </Parameters>
+
+
+
+            <ParameterRefs> 
+              <!-- Kanalname und -nummer -->
+              <ParameterRef Id="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_P-%TT%%CC%001" />  <!-- Beschreibung des Kanals -->
+              
+               <!-- Byte0 bis Byte5 -->
+
+              <ParameterRef Id="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_UP-%TT%%CC%003" /> <!-- Kanalaktivität --> 
+              <ParameterRef Id="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_UP-%TT%%CC%004" /> <!-- Niederschlagsrate via KO -->
+              <ParameterRef Id="%AID%_UP-%TT%%CC%005_R-%TT%%CC%00501" RefId="%AID%_UP-%TT%%CC%005" SuffixText="mm/h" /> <!-- Niederschlagsrate -->
+              <ParameterRef Id="%AID%_UP-%TT%%CC%006_R-%TT%%CC%00601" RefId="%AID%_UP-%TT%%CC%006" /> <!-- SchwellwertValue via ko -->
+              <ParameterRef Id="%AID%_UP-%TT%%CC%007_R-%TT%%CC%00701" RefId="%AID%_UP-%TT%%CC%007" SuffixText="%" /> <!-- SchwellwertValue -->
+              <ParameterRef Id="%AID%_UP-%TT%%CC%008_R-%TT%%CC%00801" RefId="%AID%_UP-%TT%%CC%008" /> <!-- nFKValue via KO -->
+              <ParameterRef Id="%AID%_UP-%TT%%CC%009_R-%TT%%CC%00901" RefId="%AID%_UP-%TT%%CC%009" SuffixText="mm" /> <!-- nFKValue -->
+              <ParameterRef Id="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001" RefId="%AID%_UP-%TT%%CC%010" /> <!-- KcValue via KO  -->
+              <ParameterRef Id="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_UP-%TT%%CC%011" SuffixText="" /> <!-- KcValue -->
+
+            </ParameterRefs>
+
+            <!--<ParameterRefs>
+              <ParameterRef Id="%AID%_P-%TT%%CC%000_R-%TT%%CC%00001" RefId="%AID%_P-%TT%%CC%000" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_P-%TT%%CC%001" />
+
+              <ParameterRef Id="%AID%_P-%TT%%CC%002_R-%TT%%CC%00201" RefId="%AID%_P-%TT%%CC%002" SuffixText="*mm/h" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_UP-%TT%%CC%003" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_P-%TT%%CC%004" SuffixText="%" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%005_R-%TT%%CC%00501" RefId="%AID%_UP-%TT%%CC%005" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%006_R-%TT%%CC%00601" RefId="%AID%_P-%TT%%CC%006" SuffixText="mm" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%007_R-%TT%%CC%00701" RefId="%AID%_UP-%TT%%CC%007" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%008_R-%TT%%CC%00801" RefId="%AID%_P-%TT%%CC%008" SuffixText="" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%009_R-%TT%%CC%00901" RefId="%AID%_UP-%TT%%CC%009" />
+            </ParameterRefs>-->
+
+            <ComObjectTable>
+
+              <!-- "lokale" KOs je Zone-->
+              <!-- Parameter-Override-KOs (nur relevant wenn ViaKO=Ja) -->
+              <ComObject Id="%AID%_O-%TT%%CC%010" Name="Ch%C%Niederschlagsrate"  Text="Zone %C%: Niederschlagsrate[mm/h]" FunctionText="Eingang Niederschlagsrate [mm/h]" Number="%K10%" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%011" Name="Ch%C%Schwellwert"        Text="Zone %C%: Schwellwert[%]" FunctionText="Eingang Schwellwert [%]" Number="%K11%" ObjectSize="1 Byte" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%012" Name="Ch%C%nFK"                Text="Zone %C%: nFK" FunctionText="Eingang nFK [mm]" Number="%K12%" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%013" Name="Ch%C%Kc"                 Text="Zone %C%: Kc" FunctionText="Eingang Kc-Faktor" Number="%K13%" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+
+              <!-- Eingänge -->
+              <ComObject Id="%AID%_O-%TT%%CC%016" Name="Ch%C%ZonenFreigabe"      Text="Zone %C%: Freigabe" FunctionText="Freigabe" Number="%K16%" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+
+              <!-- Ausgänge -->
+              <ComObject Id="%AID%_O-%TT%%CC%017" Name="Ch%C%Bedarf"             Text="Zone %C%: Bewässerungsbedarf" FunctionText="Ausgang Bewässerungsbedarf" Number="%K17%" ObjectSize="1 Bit" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%018" Name="Ch%C%Fehlmenge"          Text="Zone %C%: Fehlmenge [mm]" FunctionText="Ausgang Fehlmenge [mm]" Number="%K18%" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
+              <ComObject Id="%AID%_O-%TT%%CC%019" Name="Ch%C%Laufzeit"           Text="Zone %C%: Laufzeit [s]" FunctionText="Ausgang Laufzeit [s]" Number="%K19%" ObjectSize="4 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-7-5" />
+              <ComObject Id="%AID%_O-%TT%%CC%020" Name="Ch%C%Wasserbilanzkonto"  Text="Zone %C%: Wasserbilanzkonto" FunctionText="Ausgang Wasserbilanzkonto [mm]" Number="%K20%" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
+            </ComObjectTable>
+
+            <ComObjectRefs>
+              <ComObjectRef Id="%AID%_O-%TT%%CC%010_R-%TT%%CC%01001" RefId="%AID%_O-%TT%%CC%010" />              <!-- Niederschlagsrate -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_O-%TT%%CC%011" />              <!-- Schwellwert -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%012_R-%TT%%CC%01201" RefId="%AID%_O-%TT%%CC%012" />              <!-- nFK -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%013_R-%TT%%CC%01301" RefId="%AID%_O-%TT%%CC%013" />              <!-- Kc -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%016_R-%TT%%CC%01601" RefId="%AID%_O-%TT%%CC%016" />              <!-- ZonenFreigabe -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%017_R-%TT%%CC%01701" RefId="%AID%_O-%TT%%CC%017" />              <!-- Bedarf -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%018_R-%TT%%CC%01801" RefId="%AID%_O-%TT%%CC%018" />              <!-- Fehlmenge -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%019_R-%TT%%CC%01901" RefId="%AID%_O-%TT%%CC%019" />              <!-- Laufzeit% -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%020_R-%TT%%CC%02001" RefId="%AID%_O-%TT%%CC%020" />              <!-- Wasserbilanzkonto -->
+            </ComObjectRefs>
+          </Static>
+
+          <Dynamic>
+                                  <!--           <Channel Id="%AID%_CH-1" Number="1" Name="Hidden-Channel-List">
+                                    <ParameterBlock Id="%AID%_PB-nnn" Name="Channel-List">
+                                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%000_R-%TT%%CC%00001" Cell="%C%,1" />
+                                      Beschreibung Zone 
+                                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" Cell="%C%,2" />
+                                      Kanal aktiv 
+                                    </ParameterBlock>
+                                    <ParameterBlock Id="%AID%_PB-nnn" Name="Row-List" Inline="true" Layout="Grid">
+                                      <Rows>
+                                        <Row Id="%AID%_PB-nnn_R-%C%" Text="Zone %C%" />
+                                      </Rows>
+                                    </ParameterBlock>
+                                  </Channel>-->
+
+            <ChannelIndependentBlock>
+              <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101"> <!-- VisibleChannels -->
+                <when test="&gt;=%C%">
+                  <ParameterBlock Id="%AID%_PB-nnn" Text="Bewässerungszone %C%: {{0: ...}}" TextParameterRefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" Icon="sprinkler" HelpContext="Empty" ShowInComObjectTree="true">
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Kanaldefinition" UIHint="Headline" />
+                    <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" IndentLevel="1" HelpContext="%DOC%" /> <!-- Beschreibung Kanal -->
+                    <ParameterRefRef RefId="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301" IndentLevel="1" HelpContext="%DOC%" /> <!-- Kanalaktivität -->
+                    <choose ParamRefId="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301">
+                      <when test="2">
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Wenn ein Kanal funktionslos geschaltet wird, bleiben alle Parameter und GA-Zuweisungen erhalten, ohne dass der Kanal etwas macht. Dies kann bei einer Fehlersuche sinnvoll sein." />
+                      </when>
+                      <when test=">0">
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
+                 
+                        <!-- KOs anzeigen je Zone -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%016_R-%TT%%CC%01601" />                    <!-- ZonenFreigabe -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%017_R-%TT%%CC%01701" />                    <!-- Bedarf -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%018_R-%TT%%CC%01801" />                    <!-- Fehlmenge -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%019_R-%TT%%CC%01901" />                    <!-- Laufzeit% -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%020_R-%TT%%CC%02001" />                    <!-- Wasserbilanzkonto -->
+
+
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Zonenparameter" UIHint="Headline" />
+
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%005_R-%TT%%CC%00501" IndentLevel="1" HelpContext="%DOC%" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401" IndentLevel="1" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Praxistipp: MP Rotator Standarddüsen = 10 mm/h, MP800 = 20 mm/h" /> 
+                        <choose ParamRefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401">
+                          <when test="=1">
+                            <ComObjectRefRef RefId="%AID%_O-%TT%%CC%010_R-%TT%%CC%01001" />                    <!-- Niederschlagsrate -->
+                          </when>
+                        </choose>
+
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%007_R-%TT%%CC%00701" IndentLevel="1" HelpContext="%DOC%" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%006_R-%TT%%CC%00601" IndentLevel="1" />
+                        <choose ParamRefId="%AID%_UP-%TT%%CC%006_R-%TT%%CC%00601">
+                          <when test="=1">
+                            <ComObjectRefRef RefId="%AID%_O-%TT%%CC%011_R-%TT%%CC%01101" />                    <!-- Schwellwert -->
+                          </when>
+                        </choose>
+
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%009_R-%TT%%CC%00901" IndentLevel="1" HelpContext="%DOC%" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%008_R-%TT%%CC%00801" IndentLevel="1" />
+                        <choose ParamRefId="%AID%_UP-%TT%%CC%008_R-%TT%%CC%00801">
+                          <when test="=1">
+                            <ComObjectRefRef RefId="%AID%_O-%TT%%CC%012_R-%TT%%CC%01201" />                    <!-- nFK -->
+                          </when>
+                        </choose>
+
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" IndentLevel="1" HelpContext="%DOC%" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001" IndentLevel="1" />
+                        <choose ParamRefId="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001">
+                          <when test="=1">
+                            <ComObjectRefRef RefId="%AID%_O-%TT%%CC%013_R-%TT%%CC%01301" />                    <!-- Kc -->
+                          </when>
+                        </choose>
+
+                      </when>
+                    </choose>
+                  </ParameterBlock>
+                </when>
+              </choose>
+            </ChannelIndependentBlock>
+          </Dynamic>
+        </ApplicationProgram>
+      </ApplicationPrograms>
+    </Manufacturer>
+  </ManufacturerData>
+</KNX>
+
+<!-- | **Element** | **Ein-Satz-Erklärung** | -->
+<!-- | ___________ | ______________________ | -->
+<!-- | **Parameter** | "Hier ist ein Parameter mit Typ, Speicher und Defaultwert" | -->
+<!-- | **ParameterRef** | "Ich nenne diesen Parameter jetzt anders" | -->
+<!-- | **ParameterRefRef** | "Zeige diesen umbenannten Parameter in der ETS-UI" | -->
+<!-- | **ComObject** | "Hier ist ein KO mit DPT und Flags" | -->
+<!-- | **ComObjectRef** | "Ich nenne dieses KO anders oder invertiere es" | -->
+<!-- | **ComObjectRefRef** | "Zeige dieses umbenannte KO in der ETS-UI" | -->

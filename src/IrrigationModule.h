@@ -35,6 +35,7 @@ class IrrigationModule : public OpenKNX::Module
   private:
     IrrigationChannel *_channels[IRR_ChannelCount] = {}; // init mit // channel[0] = nullptr, // channel[1] = nullptr, usw
     uint8_t _numChannels = 0;
+    bool _Sperre_Global = true;
 
     float ET0_gestern;
 
@@ -69,8 +70,6 @@ class IrrigationModule : public OpenKNX::Module
         // Eingänge vom Bus
     void process_Temperatur_Wetterstation(float aktuelleTemperatur);
     void process_Regenmenge_Wetterstation(float regenmengeHeuteMm);
-    void process_Bewaesserungsberechnung(void);
-    bool ET0_processCommand(const std::string cmd, bool debugKo);
     uint16_t getYearDay(void); // liefert J, 1-basiert (1..366)
     float get_Geographische_Breite_Radiant();
     RaResult calc_Ra(uint16_t J);
@@ -78,7 +77,7 @@ class IrrigationModule : public OpenKNX::Module
 
     void calculateEt0(uint16_t TagdesJahres);
     float calc_ET0(float T_mean, float T_max, float T_min, float Ra_mm);
-    bool ermittleglobaleFreigabe();
+    bool get_globaleSperre();
 
     static const uint8_t _magicWord[IRR_FLASH_MAGIC_WORD_LEN];
 };

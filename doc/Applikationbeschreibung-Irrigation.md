@@ -41,9 +41,9 @@ Laufender Außentemperaturwert (z. B. von einer Wetterstation oder aus Home Assi
 
 Bereits aufsummierter Tages-Niederschlag in mm (= l/m²), DPT 9.026, typischerweise von einem Regenmesser/Rainclick-Modul. Wird beim Tageswechsel als Niederschlagswert des abgelaufenen Tages in die Wasserbilanz aller Zonen eingerechnet.
 <!-- DOC -->
-#### Globale Freigabe Bewaesserung
+#### Globale Sperre Bewaesserung
 
-Geräteweite Sicherheitsfreigabe (DPT 1.001). Nur wenn dieses Objekt aktiv ist **und** die Zonenfreigabe der jeweiligen Zone aktiv ist **und** die Wasserbilanz einen Bedarf ermittelt hat, wird tatsächlich bewässert. Gedacht für übergeordnete Bedingungen wie Wasserdruck, Störungsfreiheit oder eine manuelle Anlagensperre.
+Geräteweite Sperre. Nur wenn dieses Objekt false ist **und** die Zonensperre der jeweiligen Zone false ist **und** die Wasserbilanz einen Bedarf ermittelt hat, wird tatsächlich bewässert. Gedacht für übergeordnete Bedingungen wie Wasserdruck, Störungsfreiheit oder eine manuelle Anlagensperre.
 <!-- DOC -->
 #### ET0
 
@@ -78,9 +78,9 @@ Kulturfaktor (Crop Coefficient). Skaliert die geräteweit berechnete Referenz-Ev
 
 Schaltet den jeweiligen Parameter von einem festen ETS-Wert auf eine Vorgabe per Kommunikationsobjekt um – z. B. um den Kc-Faktor saisonal aus Home Assistant nachzuführen. Solange diese Option deaktiviert ist, gilt ausschließlich der links eingestellte ETS-Wert.
 <!-- DOC -->
-#### Zonenfreigabe
+#### Zonensperre
 
-Zusätzliche, nur für diese Zone geltende Freigabe (DPT 1.001). Eine Bewässerung dieser Zone findet nur statt, wenn zusätzlich zur geräteweiten "Globalen Freigabe" (siehe Seite "Allgemein") auch diese Zonenfreigabe aktiv ist. Ermöglicht es, einzelne Zonen unabhängig stillzulegen (z. B. Neuansaat, Bauarbeiten), ohne die gesamte Anlage zu sperren.
+Zusätzliche, nur für diese Zone geltende Sperre. Eine Bewässerung dieser Zone findet nur statt, wenn zusätzlich zur geräteweiten "Globalen Sperre" (siehe Seite "Allgemein") auch diese Zonensperre nicht aktiv ist. Ermöglicht es, einzelne Zonen unabhängig stillzulegen (z. B. Neuansaat, Bauarbeiten), ohne die gesamte Anlage zu sperren.
 <!-- DOC -->
 #### Bewässerungsbedarf
 
@@ -100,7 +100,7 @@ Ausgang in mm: aktueller Kontostand des simulierten Bodenwasserspeichers dieser 
 <!-- DOC -->
 ### Bewässerungszonen
 
-Übersicht aller verfügbaren Bewässerungszonen (z. B. Rasen, Beet). Jede Zone entspricht einem eigenen Kanal mit eigenem Bodenwasserkonto, eigenen Zonenparametern (Niederschlagsrate, nFK, Kc, Schwellwert) und eigener Zonenfreigabe.
+Übersicht aller verfügbaren Bewässerungszonen (z. B. Rasen, Beet). Jede Zone entspricht einem eigenen Kanal mit eigenem Bodenwasserkonto, eigenen Zonenparametern (Niederschlagsrate, nFK, Kc, Schwellwert) und eigener (Zonen-)Sperre.
 
 <!-- DOC -->
 #### Aktiv

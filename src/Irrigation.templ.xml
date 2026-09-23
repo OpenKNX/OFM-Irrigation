@@ -99,13 +99,16 @@
               <ComObject Id="%AID%_O-%TT%%CC%013" Name="Ch%C%Kc"                 Text="Zone %C%: Kc" FunctionText="Eingang Kc-Faktor" Number="%K13%" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
 
               <!-- Eingänge -->
-              <ComObject Id="%AID%_O-%TT%%CC%016" Name="Ch%C%ZonenFreigabe"      Text="Zone %C%: Freigabe" FunctionText="Freigabe" Number="%K16%" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%016" Name="Ch%C%ZonenSperre"        Text="Zone %C%: Sperre" FunctionText="Sperre" Number="%K14%" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-3" />
+              <ComObject Id="%AID%_O-%TT%%CC%021" Name="Ch%C%StatusMagnetventil" Text="Zone %C%: Status Magnetventil"  FunctionText="Eingang Status Magnetventil" Number="%K15%" ObjectSize="1 Bit"  ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
 
               <!-- Ausgänge -->
               <ComObject Id="%AID%_O-%TT%%CC%017" Name="Ch%C%Bedarf"             Text="Zone %C%: Bewässerungsbedarf" FunctionText="Ausgang Bewässerungsbedarf" Number="%K17%" ObjectSize="1 Bit" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
               <ComObject Id="%AID%_O-%TT%%CC%018" Name="Ch%C%Fehlmenge"          Text="Zone %C%: Fehlmenge [mm]" FunctionText="Ausgang Fehlmenge [mm]" Number="%K18%" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
-              <ComObject Id="%AID%_O-%TT%%CC%019" Name="Ch%C%Laufzeit"           Text="Zone %C%: Laufzeit [s]" FunctionText="Ausgang Laufzeit [s]" Number="%K19%" ObjectSize="4 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-7-5" />
+              <ComObject Id="%AID%_O-%TT%%CC%019" Name="Ch%C%Laufzeit"           Text="Zone %C%: Laufzeit [s]" FunctionText="Ausgang Laufzeit [s]" Number="%K19%" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-7-5" />
               <ComObject Id="%AID%_O-%TT%%CC%020" Name="Ch%C%Wasserbilanzkonto"  Text="Zone %C%: Wasserbilanzkonto" FunctionText="Ausgang Wasserbilanzkonto [mm]" Number="%K20%" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
+              <ComObject Id="%AID%_O-%TT%%CC%022" Name="Ch%C%DiagnoseBewaesserunggesperrt"  Text="Zone %C%: Bewässerung gesperrt" FunctionText="Diagnose: Bewaesserung gesperrt" Number="%K22%" ObjectSize="1 Bit" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+            
             </ComObjectTable>
 
             <ComObjectRefs>
@@ -113,7 +116,9 @@
               <ComObjectRef Id="%AID%_O-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_O-%TT%%CC%011" />              <!-- Schwellwert -->
               <ComObjectRef Id="%AID%_O-%TT%%CC%012_R-%TT%%CC%01201" RefId="%AID%_O-%TT%%CC%012" />              <!-- nFK -->
               <ComObjectRef Id="%AID%_O-%TT%%CC%013_R-%TT%%CC%01301" RefId="%AID%_O-%TT%%CC%013" />              <!-- Kc -->
-              <ComObjectRef Id="%AID%_O-%TT%%CC%016_R-%TT%%CC%01601" RefId="%AID%_O-%TT%%CC%016" />              <!-- ZonenFreigabe -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%016_R-%TT%%CC%01601" RefId="%AID%_O-%TT%%CC%016" />              <!-- ZonenSperre -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%021_R-%TT%%CC%02101" RefId="%AID%_O-%TT%%CC%021" />              <!--  Status Magnetventil -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%022_R-%TT%%CC%02201" RefId="%AID%_O-%TT%%CC%022" />              <!--  Diagnose_Bewaesserung_gesperrt -->
               <ComObjectRef Id="%AID%_O-%TT%%CC%017_R-%TT%%CC%01701" RefId="%AID%_O-%TT%%CC%017" />              <!-- Bedarf -->
               <ComObjectRef Id="%AID%_O-%TT%%CC%018_R-%TT%%CC%01801" RefId="%AID%_O-%TT%%CC%018" />              <!-- Fehlmenge -->
               <ComObjectRef Id="%AID%_O-%TT%%CC%019_R-%TT%%CC%01901" RefId="%AID%_O-%TT%%CC%019" />              <!-- Laufzeit% -->
@@ -151,12 +156,13 @@
                         <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                  
                         <!-- KOs anzeigen je Zone -->
-                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%016_R-%TT%%CC%01601" />                    <!-- ZonenFreigabe -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%016_R-%TT%%CC%01601" />                    <!-- ZonenSperre -->
                         <ComObjectRefRef RefId="%AID%_O-%TT%%CC%017_R-%TT%%CC%01701" />                    <!-- Bedarf -->
                         <ComObjectRefRef RefId="%AID%_O-%TT%%CC%018_R-%TT%%CC%01801" />                    <!-- Fehlmenge -->
                         <ComObjectRefRef RefId="%AID%_O-%TT%%CC%019_R-%TT%%CC%01901" />                    <!-- Laufzeit% -->
                         <ComObjectRefRef RefId="%AID%_O-%TT%%CC%020_R-%TT%%CC%02001" />                    <!-- Wasserbilanzkonto -->
-
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%021_R-%TT%%CC%02101" />                    <!-- Status Magentventil-->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%022_R-%TT%%CC%02201" />                     <!--  Diagnose_Bewaesserung_gesperrt -->
 
                         <ParameterSeparator Id="%AID%_PS-nnn" Text="Zonenparameter" UIHint="Headline" />
 

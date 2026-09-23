@@ -16,7 +16,7 @@ $$
 ET_c
 $$
 
-Der Niederschlag wird über den Regenmesser bzw. Rainclick erfasst. Der Wasserverlust des Bodens wird über die **kulturspezifische Evapotranspiration \(ET_c\)** berechnet.
+Der Niederschlag wird über einen Regenmesser erfasst. Der Wasserverlust des Bodens wird über die **kulturspezifische Evapotranspiration \(ET_c\)** berechnet.
 
 Dieses Prinzip entspricht grundsätzlich dem Ansatz moderner bedarfsabhängiger Bewässerungssteuerungen.
 
@@ -367,31 +367,31 @@ $$
 
 ---
 
-# 8. Sicherheitsfreigabe
+# 8. Sperre
 
 Der errechnete Bedarf allein darf die Bewässerung noch nicht unmittelbar starten.
 
-Die eigentliche Freigabe wird mit den bestehenden Sicherheitsbedingungen verknüpft:
+Die eigentliche Sperre wird mit den bestehenden Bedingungen verknüpft:
 
 $$
-Freigabe
+Diagnose_Bewaesserung_gesperrt
 =
 Bedarf
 \land
-Globale\_Freigabe
+Globale\_Sperre
 \land
-Zonen\_Freigabe
+Zonen\_Sperre
 $$
 
-`Globale_Freigabe` (geräteweit, ein KO) kann beispielsweise weitere Bedingungen enthalten:
+`Globale_Sperre` (geräteweit, ein KO) kann beispielsweise weitere Bedingungen enthalten:
 
-* Bewässerungsanlage freigegeben
-* keine Sperrzeit
-* keine Störung
-* ausreichender Wasserdruck
+* Bewässerungsanlage gesperrt
+* Sperrzeit
+* Störung
+* nicht ausreichender Wasserdruck
 * sonstige Anlagenbedingungen
 
-`Zonen_Freigabe` (pro Zone, ein eigenes KO) erlaubt zusätzlich, einzelne Zonen unabhängig voneinander stillzulegen (z. B. eine frisch gesäte Fläche, eine Baustelle im Beet), ohne die globale Freigabe für die ganze Anlage zu deaktivieren.
+`Zonen_Sperre` (pro Zone, ein eigenes KO) erlaubt zusätzlich, einzelne Zonen unabhängig voneinander stillzulegen (z. B. eine frisch gesäte Fläche, eine Baustelle im Beet), ohne die globale Sperre für die ganze Anlage zu deaktivieren.
 
 Damit bleibt die Wasserbilanz für die **Bedarfsermittlung** zuständig, während die eigentliche Anlagenfreigabe separat behandelt wird.
 
@@ -873,7 +873,7 @@ Konsequent aus Abschnitt 3 und 14 abgeleitet, sind in der ETS zwei Ebenen getren
 | ---------------------------------- | -------------------------------------- |
 | Eingang: Aktuelle Temperatur       | \(T\), fließt in Tmin/Tmax/Tmean ein   |
 | Eingang: Regenmenge heute          | *Niederschlag* aus Abschnitt 4         |
-| Eingang: Globale Freigabe          | *Globale_Freigabe* aus Abschnitt 8     |
+| Eingang: Globale Sperre          | *Globale_Sperre* aus Abschnitt 8     |
 | Ausgang: ET0 [mm/Tag]              | \(ET_0\) aus Abschnitt 2               |
 | Ausgang: Diagnose Tmax/Tmin/Tmean heute/gestern | Zwischenwerte der Tagesaggregation |
 
@@ -885,7 +885,7 @@ Konsequent aus Abschnitt 3 und 14 abgeleitet, sind in der ETS zwei Ebenen getren
 | Parameter/KO: Schwellwert [%]        | \(p\) aus Abschnitt 6              |
 | Parameter/KO: nFK [mm]               | \(nFK\) aus Abschnitt 5            |
 | Parameter/KO: Kc-Faktor              | \(K_c\) aus Abschnitt 3            |
-| Eingang: Zonenfreigabe               | *Zonen_Freigabe* aus Abschnitt 8   |
+| Eingang: ZonenSperre               | *Zonen_Sperre* aus Abschnitt 8   |
 | Ausgang: Bewässerungsbedarf          | *Bedarf* aus Abschnitt 7           |
 | Ausgang: Fehlmenge [mm]              | *Fehlmenge* aus Abschnitt 9        |
 | Ausgang: Laufzeit [s]                | *Laufzeit_Sek* aus Abschnitt 10    |
@@ -918,7 +918,7 @@ Anders als eine klassische ETS-Logikschaltung mit Zeitschaltuhr-Baustein nutzt d
            │
            ▼
 04:00/05:00 Uhr (parametrierbar)
-           Globale Freigabe UND Zonenfreigabe UND Bedarf?
+           Globale Sperre UND ZonenSperre UND Bedarf?
            │
            └─ Ja → Ventil öffnen, für die vorgemerkte Laufzeit
            │
@@ -933,9 +933,3 @@ Zwei Entscheidungen, die von einer wörtlichen 1:1-Umsetzung der Formeln abweich
 * **ET0 wird mit dem Kalendertag des *abgelaufenen* Tages berechnet**, nicht mit dem Tag, an dem die Berechnung tatsächlich läuft (00:00 Uhr ist ja bereits der neue Tag). Da sich die astronomischen Zwischenwerte (`dr`, `δ`, `ωs`) von Tag zu Tag nur minimal ändern, wäre der Unterschied in der Praxis vernachlässigbar – exakt ist es trotzdem nur mit dem richtigen Tag.
 * **Rückbuchung erfolgt zeitgesteuert (abgelaufene Laufzeit), nicht über einen Ventil-Status-Bus-Rückmeldewechsel** – da die Firmware das Ventil selbst öffnet und schließt, ist kein zusätzlicher Bus-Roundtrip nötig, um zu wissen, wann die Bewässerung beendet ist.
 
-## 20.3 Bekannte Vereinfachungen dieser Implementierung
-
-Ergänzend zu Abschnitt 17 (fachliche Näherungen) zwei Punkte, die sich aus der konkreten Umsetzung ergeben:
-
-* Die **globale Freigabe** deckt aktuell keine differenzierten Sicherheitsbedingungen (Wasserdruck, Störungsmeldung) ab, sondern ist ein einzelnes KO – die Verknüpfung mehrerer Bedingungen zu dieser Freigabe erfolgt extern (z. B. per Logikkanal oder in Home Assistant), bevor sie auf dieses KO geschrieben wird.
-* Der Kc-Faktor ist, sofern nicht per KO überschrieben, ein **fester ETS-Parameter** – eine automatische saisonale Anpassung (z. B. über einen Kalenderplan) ist nicht Teil der Firmware, sondern müsste extern (Home Assistant, Logikmodul) auf das Kc-KO geschrieben werden.

@@ -1,22 +1,7 @@
-/*
-  # Arylic's UART API developer documentation
-  # https://developer.arylic.com/uartapi/#uart-api
-
-# Basic Rules
-   * messages are defined in 3 characters, and will use : to seperate the different part.
-   * messages sent over UART need to be terminated with ;
-   * messages might be received without query when state changed.
-   * Content between {} is variable name, you need to replace with the real content, and {} itself is not meant to be sent.
-   * Content between [] means optional, and [] itself is not meant to be sent.
-   * normally, messages sent by host without param means to query current state or direct control
-   * messages sent with param means to control or change state.
-   * messages received normally with param indicating current state.
-*/
-
 #include "IrrigationModule.h"
 #include "OpenKNX.h"
 #include "ModuleVersionCheck.h"
-#include "KnxHelper.h"
+
 
 
 IrrigationModule openknxIrrigationModule;
@@ -32,7 +17,7 @@ IrrigationModule::IrrigationModule()
 
 IrrigationModule::~IrrigationModule()
 {
-    for (uint8_t i = 0; i < _numChannels; i++)
+    for (uint8_t i = 0; i < IRR_ChannelCount; i++)
     {
         delete _channels[i];
     }
@@ -76,15 +61,11 @@ void IrrigationModule::loop()
             for (uint8_t i = 0; i < MIN(ParamIRR_VisibleChannels, IRR_ChannelCount); i++)
             {
                 if (_channels[i] == nullptr) continue;
-                _channels[i]->process_Bewaesserungsberechnung_channel(ET0_gestern, Regenmenge_gestern);;
+                _channels[i]->process_Bewaesserungsberechnung_channel(ET0_gestern, Regenmenge_gestern, _Sperre_Global);
             }
         }
 
-        if (ermittleglobaleFreigabe() == 1)
-        {
-
-        }
-    
+ 
         //     // ---- Bewässerungsstart-Trigger (einmal pro Tag) ----
         // if (BewaesserungszoneBedarf && !BewaesserungszoneVentilOffen && letzterBewaesserungsTag != heute &&
         //     tmNow.tm_hour == BEWAESSERUNG_START_STUNDE && tmNow.tm_min == 0)
@@ -127,11 +108,15 @@ void IrrigationModule::processInputKo(GroupObject &iKo)
    
     if (iKo.asap() == IRR_KoTemperatur_Wetterstation) 
     {
-        process_Temperatur_Wetterstation(iKo.value(getDPT(VAL_DPT_9)));
+        process_Temperatur_Wetterstation(iKo.value(DPT_Value_Temp));
     }
     else if (iKo.asap() == IRR_KoRegenmenge_Wetterstation)  
     {
-        process_Regenmenge_Wetterstation(iKo.value(getDPT(VAL_DPT_9)));
+        process_Regenmenge_Wetterstation(iKo.value(DPT_Rain_Amount));
+    }
+    else if  (iKo.asap() == IRR_KoGlobaleSperre)
+    {
+        _Sperre_Global = KoIRR_GlobaleSperre.value(DPT_Enable);
     }
 
     for (uint8_t i = 0; i < MIN(ParamIRR_VisibleChannels, IRR_ChannelCount); i++)
@@ -428,14 +413,13 @@ float IrrigationModule::calc_ET0(float T_mean, float T_max, float T_min, float R
 }
 
 
-
-
-// TODO: echte Freigabe (Rainclick/Füllstand/Zeitfenster) noch nicht verdrahtet
-bool IrrigationModule::ermittleglobaleFreigabe()
+bool IrrigationModule::get_globaleSperre()
 {
     // gloable Freigaeb abrufen via KO
+    return _Sperre_Global;
     return true;
 }
+
 
 void IrrigationModule::process_Temperatur_Wetterstation (float aktuelleTemperatur)
 {
@@ -482,10 +466,9 @@ void IrrigationModule::process_Regenmenge_Wetterstation (float regenmengeHeuteMm
 
 bool IrrigationModule::processCommand(const std::string command, bool diagnose)
 {
-    uint8_t value = 0;
     if (command.substr(0, 3) == "irr")
     {
-        if (!diagnose && command == "amp debug")
+        if (!diagnose && command == "irr debug")
         {
             _debug = !_debug;
             logDebugP(_debug ? "IRR Debug enabled" : "IRR Debug disabled");

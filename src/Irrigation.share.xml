@@ -56,7 +56,7 @@
               <ComObject Id="%AID%_O-%TT%00100" Name="Berechnung_ET0"            FunctionText="Global Ausgang"  Text="Berechnung ET0 [mm/Tag]"         Number="1000" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
               <ComObject Id="%AID%_O-%TT%00101" Name="Temperatur_Wetterstation"     FunctionText="Global Eingang:" Text="Aktuelle Temperatur"             Number="1001" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%00102" Name="Regenmenge_Wetterstation"     FunctionText="Global Eingang:" Text="Regenmenge heute"                Number="1002" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
-              <ComObject Id="%AID%_O-%TT%00103" Name="GlobaleFreigabe" FunctionText="Global Eingang:" Text="Globale Freigabe Bewässerung"   Number="1003" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%00103" Name="GlobaleSperre" FunctionText="Global Eingang:" Text="Globale Sperre Bewässerung"   Number="1003" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-2" />
               <ComObject Id="%AID%_O-%TT%00104" Name="TDurchschnittHeute" FunctionText="Global Ausgang:" Text="Berechnung Durchschnittstemperatur heute"    Number="1004" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%00105" Name="TDurchschnittGestern" FunctionText="Global Ausgang:" Text="Berechnung Durchschnittstemperatur gestern" Number="1005" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%00106" Name="TMaxHeute" FunctionText="Global Ausgang:" Text="Berechnung Temperatur max heute" Number="1006" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
@@ -68,7 +68,7 @@
               <ComObjectRef Id="%AID%_O-%TT%00100_R-%TT%0010001" RefId="%AID%_O-%TT%00100" />              <!-- ET0 -->
               <ComObjectRef Id="%AID%_O-%TT%00101_R-%TT%0010101" RefId="%AID%_O-%TT%00101" />              <!-- Temperatur -->
               <ComObjectRef Id="%AID%_O-%TT%00102_R-%TT%0010201" RefId="%AID%_O-%TT%00102" />              <!-- Regenmenge -->
-              <ComObjectRef Id="%AID%_O-%TT%00103_R-%TT%0010301" RefId="%AID%_O-%TT%00103" />              <!-- GlobaleFreigabe -->
+              <ComObjectRef Id="%AID%_O-%TT%00103_R-%TT%0010301" RefId="%AID%_O-%TT%00103" />              <!-- GlobaleSperre -->
               <ComObjectRef Id="%AID%_O-%TT%00104_R-%TT%0010401" RefId="%AID%_O-%TT%00104" />              <!-- TDurchschnittHeute -->
               <ComObjectRef Id="%AID%_O-%TT%00105_R-%TT%0010501" RefId="%AID%_O-%TT%00105" />              <!-- TDurchschnittGestern -->
               <ComObjectRef Id="%AID%_O-%TT%00106_R-%TT%0010601" RefId="%AID%_O-%TT%00106" />              <!-- TMaxHeute -->
@@ -103,7 +103,7 @@
               <ComObjectRefRef RefId="%AID%_O-%TT%00100_R-%TT%0010001" />              <!-- ET0 -->
               <ComObjectRefRef RefId="%AID%_O-%TT%00101_R-%TT%0010101" />              <!-- Temperatur -->
               <ComObjectRefRef RefId="%AID%_O-%TT%00102_R-%TT%0010201" />              <!-- Regenmenge -->
-              <ComObjectRefRef RefId="%AID%_O-%TT%00103_R-%TT%0010301" />              <!-- GlobaleFreigabe -->
+              <ComObjectRefRef RefId="%AID%_O-%TT%00103_R-%TT%0010301" />              <!-- GlobaleSperre -->
               <ComObjectRefRef RefId="%AID%_O-%TT%00104_R-%TT%0010401" />              <!-- TDurchschnittHeute -->
               <ComObjectRefRef RefId="%AID%_O-%TT%00105_R-%TT%0010501" />              <!-- TDurchschnittGestern -->
               <ComObjectRefRef RefId="%AID%_O-%TT%00106_R-%TT%0010601" />              <!-- TMaxHeute -->

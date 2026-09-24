@@ -23,9 +23,6 @@ private:
     float ermittelteFehlmenge_mm = 0.0;
     uint16_t ermittelteLaufzeit_sekunden = 0;
 
-    
-    bool _statusMagnetventilLetzter = false;      // letzter bekannter Zustand, für Flankenerkennung
-    unsigned long _ventilOffenSeitMillis = 0;     // Zeitpunkt der steigenden Flanke
 
     void onStatusMagnetventilChanged(bool offen);
 
@@ -35,15 +32,35 @@ private:
     float calc_Schwellwert_in_mm(uint8_t Schwellwert_Prozent, float nutzbareFeldkapazitaet);
     bool calc_bedarf(float Wasserbilanzkonto, float Schwellwert_in_mm);
     float calc_Fehlmenge_mm (float nutzbareFeldkapazitaet, float Bodenwasserkonto_neu);
-    float calc_laufzeit_sek(float fehlmenge_mm, float niederschlagsrate_mm_h);
+    uint16_t calc_laufzeit_sek(float fehlmenge_mm, float niederschlagsrate_mm_h);
     float calc_Zugefuehrte_Wassermenge(float laufzeit_sek, float niederschlagsrate_mm_h);
     float calc_Bodenwasserkonto_final(float Wasserbilanzkonto, float bewaesserung_mm, float nutzbareFeldkapazitaet);
     float calc_ETc(float ET0, float Kc);
     bool get_lokaleSperre();
+    uint16_t getYearDay() const;
 
     void setKOInitialValues(void);
-    
-public:
+
+
+
+    enum class ZonenStatus : uint8_t
+    {
+        Inaktiv,               // kein Bedarf
+        WartetAufStart,        // Bedarf erkannt, wartet auf Freigabe durch den Koordinator im Modul
+        Laeuft,                // Ventil angesteuert, geplante Laufzeit läuft
+        WartetAufRueckmeldung, // geplante Laufzeit abgelaufen, eigenes KO aus, wartet auf fallende Flanke der echten Rückmeldung
+        Abgeschlossen,          // Rückmeldung kam, Rückbuchung erfolgt - für heute fertig
+        TimeoutFehler           // Timeout
+    };
+    ZonenStatus _ZonenStatus = ZonenStatus::Inaktiv;
+    unsigned long _kommandoStartMillis = 0;
+    bool _statusMagnetventilLetzter = false; // letzter bekannter Zustand, für Flankenerkennung
+    uint32_t _ventil_Rueckmeldung_timeout_s = 60; //Sekunden timeout - bricht ab, wenn die Laufzeit über 60s geht.
+    uint32_t _rueckmeldungStartMillis = 0;
+
+    int16_t letzterBewaesserungsTag = -1;
+
+    public:
     IrrigationChannel(uint8_t iChannelNumber);
     ~IrrigationChannel();
 
@@ -58,5 +75,9 @@ public:
     void save();     // called by IrrigationModule::writeFlash()
     void restore();  // called by IrrigationModule::readFlash()
    
+    bool hatOffenenBedarf() const;
+    bool laeuftGerade() const;
+    void starteBewaesserung();
+
 };
 

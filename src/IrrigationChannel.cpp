@@ -17,6 +17,18 @@ const std::string IrrigationChannel::name()
     return "IrrigationChannel";
 }
 
+uint16_t IrrigationChannel::getYearDay() const
+{
+    if (!openknx.time.isValid())
+    {
+        return 0;
+    }
+
+    tm tmNow;
+    openknx.time.getLocalTime().toTm(tmNow);
+    return static_cast<uint16_t>(tmNow.tm_yday + 1);
+}
+
 // will be called once a KO received a telegram
 void IrrigationChannel::processInputKo(GroupObject &iKo)
 {
@@ -74,7 +86,6 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
             break;
         }
    
-
         default:
             logDebugP("default case processInputKo: unknown KO index %u", IRR_KoCalcIndex(iKo.asap()));
             break;   
@@ -85,7 +96,31 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
 void IrrigationChannel::loop()
 {
     if (!_channelActive) return;
-    // Tageswechsel-getriebene Berechnung; hier aktuell nichts pro Loop-Durchlauf zu tun.
+
+    if (_ZonenStatus == ZonenStatus::Laeuft)
+    {
+        uint32_t laufSek = (millis() - _kommandoStartMillis) / 1000;
+        if (laufSek >= ermittelteLaufzeit_sekunden)
+        {
+            KoIRR_ChVentilansteuerung.value(false, DPT_Switch);
+            _rueckmeldungStartMillis = millis();
+            _ZonenStatus = ZonenStatus::WartetAufRueckmeldung;
+            logDebugP("Kanal %u: WartetAufRueckmeldung", _channelIndex);
+        }
+    }
+
+    if (_ZonenStatus == ZonenStatus::WartetAufRueckmeldung)
+    {
+        //Timeout abhandeln
+        if (((uint32_t)(millis() - _rueckmeldungStartMillis)/1000) >= _ventil_Rueckmeldung_timeout_s)
+        {
+            //nocchmal zur Sicherheit abschalten 
+            KoIRR_ChVentilansteuerung.value(false, DPT_Switch);
+            _ZonenStatus = ZonenStatus::TimeoutFehler;
+            logDebugP( "Kanal %u: Timeout Ventil-Rueckmeldung", _channelIndex);
+        }
+    }
+
 }
 
 void IrrigationChannel::setup(bool configured)
@@ -97,8 +132,11 @@ void IrrigationChannel::setup(bool configured)
         return;
     }
 
+    Niederschlagsrate_Zone = ParamIRR_CHNiederschlagsrateValue;
+    Schwellwert_P_Prozent_Zone = ParamIRR_CHSchwellwertValue;
+    nutzbareFeldkapazitaet_nFK_Zone = ParamIRR_CHnFKValue;
+    _Kulturfaktor_Kc_Zone = ParamIRR_CHKcValue / 100.0f;
     setKOInitialValues(); 
-
 }
 
 
@@ -118,15 +156,31 @@ void IrrigationChannel::setKOInitialValues(void)
 void IrrigationChannel::save()
 {
     openknx.flash.writeFloat(Wasserbilanzkonto);
-    logDebugP("saved: Wasserbilanzkonto=%f", Wasserbilanzkonto);
+    openknx.flash.writeByte(static_cast<uint8_t>(_ZonenStatus));
+    logDebugP("saved: Wasserbilanzkonto=%f Status=%u", Wasserbilanzkonto, static_cast<uint8_t>(_ZonenStatus));
 }
 
 void IrrigationChannel::restore()
 {
     Wasserbilanzkonto = openknx.flash.readFloat();
-    logDebugP("restored: Wasserbilanzkonto=%f", Wasserbilanzkonto);
-}
+    ZonenStatus restoredStatus = static_cast<ZonenStatus>(openknx.flash.readByte());
 
+    if (restoredStatus == ZonenStatus::Laeuft || restoredStatus == ZonenStatus::WartetAufRueckmeldung)
+    {
+        // Zustand mitten in einer laufenden Bewässerung ist nach einem Neustart
+        // nicht mehr sicher zuzuordnen (kein gültiger Zeitstempel) - sicherheitshalber
+        // zurücksetzen und Ventil explizit aus.
+        _ZonenStatus = ZonenStatus::Inaktiv;
+        KoIRR_ChVentilansteuerung.value(false, DPT_Switch);
+        logDebugP("restored: unterbrochene Bewaesserung erkannt, Status zurueckgesetzt, Ventil aus");
+    }
+    else
+    {
+        _ZonenStatus = restoredStatus;
+    }
+
+    logDebugP("restored: Wasserbilanzkonto=%f Status=%u", Wasserbilanzkonto, static_cast<uint8_t>(_ZonenStatus));
+}
 
 
 void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern, float regenmengeGestern, bool Sperre_global)
@@ -146,7 +200,7 @@ void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern
     KoIRR_ChWasserbilanzkonto.value(Wasserbilanzkonto, DPT_Value_Temp);
     KoIRR_ChBedarf.value(Bewaesserungsbedarf, DPT_Switch);
 
-    Diagnose_Bewaesserung_gesperrt = _Sperre_Zone && Sperre_global;
+    Diagnose_Bewaesserung_gesperrt = _Sperre_Zone || Sperre_global;
     
     if (Bewaesserungsbedarf == true && Diagnose_Bewaesserung_gesperrt == false)
     {  
@@ -157,19 +211,19 @@ void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern
                             // Bewässerungsstart vormerken ()
         // sende das berechnete auf den Bus
         KoIRR_ChFehlmenge.value(ermittelteFehlmenge_mm, DPT_Value_Temp);
-        KoIRR_ChLaufzeit.value(ermittelteLaufzeit_sekunden, DPT_Value_4_Ucount); // DPT für 7.005 prüfen
+        KoIRR_ChLaufzeit.value(ermittelteLaufzeit_sekunden, DPT_TimePeriodSec); 
+        _ZonenStatus = ZonenStatus::WartetAufStart;
     }
     else
     {
+        _ZonenStatus = ZonenStatus::Inaktiv;
         //nichts zu tun - nächster Vergleich wieder morgen
     }
 
     logDebugP("Kanal %u: ETc_gestern=%.2f Wasserbilanzkonto=%.2f Schwellwert[mm]=%f", _channelIndex, ETc_gestern, Wasserbilanzkonto, Schwellwert_in_mm_Zone);
     logDebugP("Bedarf = %i Fehlmenge[mm]=%f notw_Laufzeit[s]=%i", Bewaesserungsbedarf , ermittelteFehlmenge_mm, ermittelteLaufzeit_sekunden);
 
-    // Bedarf/Fehlmenge/Laufzeit folgen hier als nächstes, sobald die
-    // Sperre-KOs verdrahtet sind - siehe unten
-
+   
 }
 
 
@@ -206,7 +260,7 @@ float IrrigationChannel::calc_Bodenwasserkonto(float konto_alt, float niederschl
 float IrrigationChannel::calc_Schwellwert_in_mm (uint8_t Schwellwert_Prozent, float nutzbareFeldkapazitaet)
 {
     // Schwellwert [mm]
-    float schwellwert_in_mm = (float)(Schwellwert_Prozent/100) * nutzbareFeldkapazitaet;
+    float schwellwert_in_mm = ((float)Schwellwert_Prozent/100.0f) * nutzbareFeldkapazitaet;
     return schwellwert_in_mm;
 }
 // ============================================================
@@ -237,12 +291,25 @@ float IrrigationChannel::calc_Fehlmenge_mm ( float nutzbareFeldkapazitaet, float
 // 9. Bewässerungs-Laufzeit
 // ============================================================
 
-float IrrigationChannel::calc_laufzeit_sek (float fehlmenge_mm, float niederschlagsrate_mm_h)
+uint16_t IrrigationChannel::calc_laufzeit_sek(float fehlmenge_mm, float niederschlagsrate_mm_h)
 {
-    // Niederschlagsrate [mm/h]
-    // Laufzeit [Sekunden]
-    float_t laufzeit_sek = (fehlmenge_mm / niederschlagsrate_mm_h) * 3600.0f;
-    return laufzeit_sek;
+    if (niederschlagsrate_mm_h <= 0.0f)
+    {
+        return 0;
+    }
+
+    float laufzeitSek = (fehlmenge_mm / niederschlagsrate_mm_h) * 3600.0f;
+    if (laufzeitSek < 0.0f)
+    {
+        return 0;
+    }
+
+    if (laufzeitSek > 65535.0f)
+    {
+        return 65535;
+    }
+
+    return static_cast<uint16_t>(laufzeitSek);
 }
 // ============================================================
 // 10. Rückbuchung der Bewässerung
@@ -266,32 +333,45 @@ float IrrigationChannel::calc_Bodenwasserkonto_final(float Bodenwasserkonto_neu,
 
 void IrrigationChannel::onStatusMagnetventilChanged(bool offen)
 {
-    if (offen == _statusMagnetventilLetzter) return; // kein Flankenwechsel, nichts zu tun
-
-    if (offen)
-    {
-        // steigende Flanke: Ventil geht auf -> Zeitmessung starten
-        _ventilOffenSeitMillis = millis();
-        logDebugP("Kanal %u: Magnetventil offen, Zeitmessung gestartet", _channelIndex);
-    }
-    else
-    {
-        // fallende Flanke: Ventil zu -> tatsächliche Laufzeit auswerten, zurückbuchen
-        uint32_t gemesseneLaufzeitSek = (millis() - _ventilOffenSeitMillis) / 1000;
-
-        float zugefuehrteWassermenge_mm = calc_Zugefuehrte_Wassermenge((float)gemesseneLaufzeitSek, Niederschlagsrate_Zone);
-        Wasserbilanzkonto = calc_Bodenwasserkonto_final(Wasserbilanzkonto, zugefuehrteWassermenge_mm, nutzbareFeldkapazitaet_nFK_Zone);
-
-        logDebugP("Kanal %u: Magnetventil zu, gemessene Laufzeit=%us, zugefuehrt=%.2fmm, Konto final=%.2f",
-                  _channelIndex, gemesseneLaufzeitSek, zugefuehrteWassermenge_mm, Wasserbilanzkonto);
-
-        KoIRR_ChWasserbilanzkonto.value(Wasserbilanzkonto, DPT_Value_Temp);
-
-        // Bedarf erneut berechnen
-        Bewaesserungsbedarf = calc_bedarf ( Wasserbilanzkonto, Schwellwert_in_mm_Zone);
-        // Bedarf ist mit dieser Bewässerung hoffentlich abgearbeitet, bis zum nächsten Tageswechsel neu bewerten
-        KoIRR_ChBedarf.value(Bewaesserungsbedarf, DPT_Switch);
-    }
-
+    if (offen == _statusMagnetventilLetzter) return;
     _statusMagnetventilLetzter = offen;
+
+    if (offen) return; // steigende Flanke ist hier nicht mehr relevant
+
+    // fallende Flanke: nur auswerten, wenn wir GENAU darauf warten
+    if (_ZonenStatus != ZonenStatus::WartetAufRueckmeldung) return;
+
+    uint32_t gemesseneLaufzeitSek = (millis() - _kommandoStartMillis) / 1000;
+    float zugefuehrteMm = calc_Zugefuehrte_Wassermenge((float)gemesseneLaufzeitSek, Niederschlagsrate_Zone);
+    Wasserbilanzkonto = calc_Bodenwasserkonto_final(Wasserbilanzkonto, zugefuehrteMm, nutzbareFeldkapazitaet_nFK_Zone);
+
+    KoIRR_ChWasserbilanzkonto.value(Wasserbilanzkonto, DPT_Value_Temp);
+    Bewaesserungsbedarf = false;
+    KoIRR_ChBedarf.value(Bewaesserungsbedarf, DPT_Switch);
+
+    _ZonenStatus = ZonenStatus::Abgeschlossen;
+    letzterBewaesserungsTag = getYearDay();
+    logDebugP("Kanal %u: Abgeschlossen, Konto final=%.2f", _channelIndex, Wasserbilanzkonto);
+}
+
+bool IrrigationChannel::hatOffenenBedarf() const
+{
+    return _ZonenStatus == ZonenStatus::WartetAufStart;
+}
+
+bool IrrigationChannel::laeuftGerade() const
+{
+    // belegt einen "Kompatibilitäts-Slot", solange die Zone nicht sicher
+    // wieder zu ist - auch während sie schon auf die Rückmeldung wartet
+    return _ZonenStatus == ZonenStatus::Laeuft || _ZonenStatus == ZonenStatus::WartetAufRueckmeldung;
+}
+
+void IrrigationChannel::starteBewaesserung()
+{
+    if (_ZonenStatus != ZonenStatus::WartetAufStart) return; // Schutz vor Fehlaufrufen
+
+    _ZonenStatus = ZonenStatus::Laeuft;
+    _kommandoStartMillis = millis();
+    KoIRR_ChVentilansteuerung.value(true, DPT_Switch);
+    logDebugP("Kanal %u: Laeuft (geplante Laufzeit=%us)", _channelIndex, ermittelteLaufzeit_sekunden);
 }

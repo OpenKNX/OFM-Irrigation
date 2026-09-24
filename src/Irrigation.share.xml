@@ -28,16 +28,22 @@
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-IRRNiederschlagsrate" Name="IRRNiederschlagsrate">
-                <TypeNumber SizeInBit="16" Type="unsignedInt" minInclusive="0" maxInclusive="500" />
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="255" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-IRRSchwellwert" Name="IRRSchwellwert">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="100" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-IRRnFK" Name="IRRnFK">
-                <TypeNumber SizeInBit="16" Type="unsignedInt" minInclusive="0" maxInclusive="1000" />
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="255" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-IRRKc" Name="IRRKc">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="100" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-IRRStunde" Name="IRRStunde">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="23" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-IRRMinute" Name="IRRMinute">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="59" />
               </ParameterType>
             </ParameterTypes>
             <Parameters>
@@ -47,10 +53,53 @@
                 <Parameter Id="%AID%_UP-%TT%00001" Name="VisibleChannels" ParameterType="%AID%_PT-IRRNumChannels" Offset="0" BitOffset="0" Text="Verfügbare Kanäle" Value="%IRR_NumChannelsDefault%" SuffixText=" von %N%" />
                 <!-- 7 bits free -->
               </Union>
+              <Union SizeInBit="8">
+                <Memory CodeSegment="%AID%_RS-04-00002" Offset="0" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00030" Name="KompatibelZone1Zone2" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 1 + Zone 2" Offset="0" BitOffset="0" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00031" Name="KompatibelZone1Zone3" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 1 + Zone 3" Offset="0" BitOffset="1" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00032" Name="KompatibelZone1Zone4" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 1 + Zone 4" Offset="0" BitOffset="2" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00033" Name="KompatibelZone1Zone5" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 1 + Zone 5" Offset="0" BitOffset="3" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00034" Name="KompatibelZone1Zone6" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 1 + Zone 6" Offset="0" BitOffset="4" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00035" Name="KompatibelZone2Zone3" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 2 + Zone 3" Offset="0" BitOffset="5" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00036" Name="KompatibelZone2Zone4" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 2 + Zone 4" Offset="0" BitOffset="6" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00037" Name="KompatibelZone2Zone5" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 2 + Zone 5" Offset="0" BitOffset="7" Value="0" />
+              </Union>
+              <Union SizeInBit="8">
+                <Memory CodeSegment="%AID%_RS-04-00003" Offset="0" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00038" Name="KompatibelZone2Zone6" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 2 + Zone 6" Offset="0" BitOffset="0" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00039" Name="KompatibelZone3Zone4" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 3 + Zone 4" Offset="0" BitOffset="1" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00040" Name="KompatibelZone3Zone5" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 3 + Zone 5" Offset="0" BitOffset="2" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00041" Name="KompatibelZone3Zone6" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 3 + Zone 6" Offset="0" BitOffset="3" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00042" Name="KompatibelZone4Zone5" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 4 + Zone 5" Offset="0" BitOffset="4" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00043" Name="KompatibelZone4Zone6" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 4 + Zone 6" Offset="0" BitOffset="5" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00044" Name="KompatibelZone5Zone6" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 5 + Zone 6" Offset="0" BitOffset="6" Value="0" />
+              </Union>
+              <Union SizeInBit="16">
+                <Memory CodeSegment="%AID%_RS-04-00004" Offset="0" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00020" Name="BewaesserungsstartStunde" ParameterType="%AID%_PT-IRRStunde" Text="Bewässerungsfenster: Startstunde" Offset="0" BitOffset="0" Value="4" />
+                <Parameter Id="%AID%_UP-%TT%00021" Name="BewaesserungsstartMinute" ParameterType="%AID%_PT-IRRMinute" Text="Bewässerungsfenster: Startminute" Offset="1" BitOffset="0" Value="0" />
+              </Union>
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_UP-%TT%00001_R-%TT%0000101" RefId="%AID%_UP-%TT%00001" /> <!-- VisibleChannels -->
               <ParameterRef Id="%AID%_P-%TT%00002_R-%TT%0000201" RefId="%AID%_P-%TT%00002" /> <!-- CheckForOneChannel -->
+              <ParameterRef Id="%AID%_UP-%TT%00020_R-%TT%0002001" RefId="%AID%_UP-%TT%00020" />
+              <ParameterRef Id="%AID%_UP-%TT%00021_R-%TT%0002101" RefId="%AID%_UP-%TT%00021" />
+              <ParameterRef Id="%AID%_UP-%TT%00030_R-%TT%0003001" RefId="%AID%_UP-%TT%00030" />
+              <ParameterRef Id="%AID%_UP-%TT%00031_R-%TT%0003101" RefId="%AID%_UP-%TT%00031" />
+              <ParameterRef Id="%AID%_UP-%TT%00032_R-%TT%0003201" RefId="%AID%_UP-%TT%00032" />
+              <ParameterRef Id="%AID%_UP-%TT%00033_R-%TT%0003301" RefId="%AID%_UP-%TT%00033" />
+              <ParameterRef Id="%AID%_UP-%TT%00034_R-%TT%0003401" RefId="%AID%_UP-%TT%00034" />
+              <ParameterRef Id="%AID%_UP-%TT%00035_R-%TT%0003501" RefId="%AID%_UP-%TT%00035" />
+              <ParameterRef Id="%AID%_UP-%TT%00036_R-%TT%0003601" RefId="%AID%_UP-%TT%00036" />
+              <ParameterRef Id="%AID%_UP-%TT%00037_R-%TT%0003701" RefId="%AID%_UP-%TT%00037" />
+              <ParameterRef Id="%AID%_UP-%TT%00038_R-%TT%0003801" RefId="%AID%_UP-%TT%00038" />
+              <ParameterRef Id="%AID%_UP-%TT%00039_R-%TT%0003901" RefId="%AID%_UP-%TT%00039" />
+              <ParameterRef Id="%AID%_UP-%TT%00040_R-%TT%0004001" RefId="%AID%_UP-%TT%00040" />
+              <ParameterRef Id="%AID%_UP-%TT%00041_R-%TT%0004101" RefId="%AID%_UP-%TT%00041" />
+              <ParameterRef Id="%AID%_UP-%TT%00042_R-%TT%0004201" RefId="%AID%_UP-%TT%00042" />
+              <ParameterRef Id="%AID%_UP-%TT%00043_R-%TT%0004301" RefId="%AID%_UP-%TT%00043" />
+              <ParameterRef Id="%AID%_UP-%TT%00044_R-%TT%0004401" RefId="%AID%_UP-%TT%00044" />
             </ParameterRefs>    
             <ComObjectTable>
               <ComObject Id="%AID%_O-%TT%00100" Name="Berechnung_ET0"            FunctionText="Global Ausgang"  Text="Berechnung ET0 [mm/Tag]"         Number="1000" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
@@ -63,6 +112,7 @@
               <ComObject Id="%AID%_O-%TT%00107" Name="TMinHeute" FunctionText="Global Ausgang:" Text="Berechnung Temperatur min heute" Number="1007" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%00108" Name="TMaxGestern" FunctionText="Global Ausgang:" Text="Berechnung Temperatur max gestern" Number="1008" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%00109" Name="TMinGestern" FunctionText="Global Ausgang:" Text="Berechnung Temperatur min gestern" Number="1009" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+            
             </ComObjectTable>
             <ComObjectRefs>
               <ComObjectRef Id="%AID%_O-%TT%00100_R-%TT%0010001" RefId="%AID%_O-%TT%00100" />              <!-- ET0 -->
@@ -80,7 +130,7 @@
 
 
           <Dynamic>
-            <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="Irrigation" Icon="water-circle">
+            <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="Bewässerung" Icon="water-circle">
               <ParameterBlock Id="%AID%_PB-nnn" Name="Settings" Text="Allgemein" Icon="cog-outline" ShowInComObjectTree="true">
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Irrigation Version %ModuleVersion%" UIHint="Headline" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
@@ -96,6 +146,119 @@
                     <Assign TargetParamRefRef="%AID%_UP-%TT%00001_R-%TT%0000101" Value="1" /> <!-- VisibleChannels -->
                   </when>
                 </choose>
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Zeitfenster" UIHint="Headline" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00020_R-%TT%0002001" HelpContext="Empty" IndentLevel="1" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00021_R-%TT%0002101" HelpContext="Empty" IndentLevel="1" />
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Gleichzeitig zulässige Zonen-Kombinationen" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="d.h. diese Zonen werden gleichzeitig bewässert und nicht nacheinander." />
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-0" />
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                    <Row Id="%AID%_PB-nnn_R-2" />
+                    <Row Id="%AID%_PB-nnn_R-3" />
+                    <Row Id="%AID%_PB-nnn_R-4" />
+                    <Row Id="%AID%_PB-nnn_R-5" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-0" Width="45%" />
+                    <Column Id="%AID%_PB-nnn_C-1" Width="45%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="45%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Width="45%" />
+                    <Column Id="%AID%_PB-nnn_C-4" Width="45%" />
+                    <Column Id="%AID%_PB-nnn_C-5" Width="45%" />
+                  </Columns>
+
+                  <!-- dynamische Anzeige der Matrix, es werden nur die aktiven Kanäle angezeigt -->
+
+                  <!-- Spaltenköpfe: Zone 2..6, nur wenn VisibleChannels die jeweilige Zone einschließt -->
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=2"><ParameterSeparator Id="%AID%_PS-nnn" Cell="1,2" UIHint="Headline" Text="Zone 2" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=3"><ParameterSeparator Id="%AID%_PS-nnn" Cell="1,3" UIHint="Headline" Text="Zone 3" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=4"><ParameterSeparator Id="%AID%_PS-nnn" Cell="1,4" UIHint="Headline" Text="Zone 4" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=5"><ParameterSeparator Id="%AID%_PS-nnn" Cell="1,5" UIHint="Headline" Text="Zone 5" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=6"><ParameterSeparator Id="%AID%_PS-nnn" Cell="1,6" UIHint="Headline" Text="Zone 6" /></when>
+                  </choose>
+
+                  <!-- Zeilenkopf Zone 1 (immer da, sobald überhaupt 1 Zone existiert) -->
+                  <ParameterSeparator Id="%AID%_PS-nnn" Cell="2,1" UIHint="Headline" Text="Zone 1" />
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=2"><ParameterRefRef RefId="%AID%_UP-%TT%00030_R-%TT%0003001" Cell="2,2" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=3"><ParameterRefRef RefId="%AID%_UP-%TT%00031_R-%TT%0003101" Cell="2,3" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=4"><ParameterRefRef RefId="%AID%_UP-%TT%00032_R-%TT%0003201" Cell="2,4" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=5"><ParameterRefRef RefId="%AID%_UP-%TT%00033_R-%TT%0003301" Cell="2,5" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=6"><ParameterRefRef RefId="%AID%_UP-%TT%00034_R-%TT%0003401" Cell="2,6" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+
+                  <!-- Zeilenkopf Zone 2 -->
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=2"><ParameterSeparator Id="%AID%_PS-nnn" Cell="3,1" UIHint="Headline" Text="Zone 2" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=3"><ParameterRefRef RefId="%AID%_UP-%TT%00035_R-%TT%0003501" Cell="3,3" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=4"><ParameterRefRef RefId="%AID%_UP-%TT%00036_R-%TT%0003601" Cell="3,4" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=5"><ParameterRefRef RefId="%AID%_UP-%TT%00037_R-%TT%0003701" Cell="3,5" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=6"><ParameterRefRef RefId="%AID%_UP-%TT%00038_R-%TT%0003801" Cell="3,6" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+
+                  <!-- Zeilenkopf Zone 3 -->
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=3"><ParameterSeparator Id="%AID%_PS-nnn" Cell="4,1" UIHint="Headline" Text="Zone 3" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=4"><ParameterRefRef RefId="%AID%_UP-%TT%00039_R-%TT%0003901" Cell="4,4" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=5"><ParameterRefRef RefId="%AID%_UP-%TT%00040_R-%TT%0004001" Cell="4,5" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=6"><ParameterRefRef RefId="%AID%_UP-%TT%00041_R-%TT%0004101" Cell="4,6" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+
+                  <!-- Zeilenkopf Zone 4 -->
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=4"><ParameterSeparator Id="%AID%_PS-nnn" Cell="5,1" UIHint="Headline" Text="Zone 4" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=5"><ParameterRefRef RefId="%AID%_UP-%TT%00042_R-%TT%0004201" Cell="5,5" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=6"><ParameterRefRef RefId="%AID%_UP-%TT%00043_R-%TT%0004301" Cell="5,6" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+
+                  <!-- Zeilenkopf Zone 5 -->
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=5"><ParameterSeparator Id="%AID%_PS-nnn" Cell="6,1" UIHint="Headline" Text="Zone 5" /></when>
+                  </choose>
+                  <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101">
+                    <when test="&gt;=6"><ParameterRefRef RefId="%AID%_UP-%TT%00044_R-%TT%0004401" Cell="6,6" HelpContext="IRR-Zonen-Kombinationen" /></when>
+                  </choose>
+                </ParameterBlock>
               </ParameterBlock>
               <op:include href="Irrigation.templ.xml" xpath="//ApplicationProgram/Dynamic/ChannelIndependentBlock/*" type="template" prefix="IRR" IsInner="true" />
             
@@ -112,41 +275,6 @@
               <ComObjectRefRef RefId="%AID%_O-%TT%00109_R-%TT%0010901" />              <!-- TMinGestern -->
             </Channel>
           </Dynamic>
-
-        <!--
-          <Dynamic ALT>
-            <Channel Id="%AID%_CH-5" Name="Standard" Number="5" Text="Bewässerungszonen">
-              <ParameterBlock Id="%AID%_PB-xxx" Name="Bewässerungszonen" Text="Bewässerungszonen" Icon="water-circle" HelpContext="IRR-Bewaesserungszonen" ShowInComObjectTree="true">
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Bewässerungszonen" UIHint="Headline" />
-                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Table" Text="#">
-                  <Rows>
-                    <op:include href="Bewaesserung.templ.xml" xpath="//Dynamic/Channel/ParameterBlock[@Name='Row-List']/Rows/*" type="template" prefix="IRR" IsInner="true" />
-                  </Rows>
-                  <Columns>
-                    <Column Id="%AID%_PB-nnn_C-1" Width="60%" Text="Beschreibung der Zone" />
-                    <Column Id="%AID%_PB-nnn_C-2" Width="40%" Text="Funktion" />
-                  </Columns>
-                  <op:include href="Bewaesserung.templ.xml" xpath="//Dynamic/Channel/ParameterBlock[@Name='Channel-List']/*" type="template" prefix="IRR" IsInner="true" />
-                </ParameterBlock>
-                <op:include href="Bewaesserung.templ.xml" xpath="//Dynamic/ChannelIndependentBlock/*" type="template" prefix="IRR" IsInner="true" />
-
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Verwendeter Breitengrad (Geraetestandort): siehe Common Parameter Geraetestandort." UIHint="Information" />
-              </ParameterBlock>
-
-           
-              <ComObjectRefRef RefId="%AID%_O-%TT%00100_R-%TT%0010001" />            
-              <ComObjectRefRef RefId="%AID%_O-%TT%00101_R-%TT%0010101" />            
-              <ComObjectRefRef RefId="%AID%_O-%TT%00102_R-%TT%0010201" />            
-              <ComObjectRefRef RefId="%AID%_O-%TT%00103_R-%TT%0010301" />            
-              <ComObjectRefRef RefId="%AID%_O-%TT%00104_R-%TT%0010401" />            
-              <ComObjectRefRef RefId="%AID%_O-%TT%00105_R-%TT%0010501" />            
-              <ComObjectRefRef RefId="%AID%_O-%TT%00106_R-%TT%0010601" />            
-              <ComObjectRefRef RefId="%AID%_O-%TT%00107_R-%TT%0010701" />            
-              <ComObjectRefRef RefId="%AID%_O-%TT%00108_R-%TT%0010801" />            
-              <ComObjectRefRef RefId="%AID%_O-%TT%00109_R-%TT%0010901" />            
-            </Channel>
-          </Dynamic> -->
         </ApplicationProgram>
       </ApplicationPrograms>
       <Baggages>

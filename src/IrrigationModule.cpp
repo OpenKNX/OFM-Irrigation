@@ -42,7 +42,6 @@ void IrrigationModule::loop()
     else
     {
         uint16_t heute = getYearDay();
-
         if (letzterBekannterTag == -1)
         {
             // erster gültiger Aufruf nach Neustart - nur merken, NICHT als
@@ -51,7 +50,6 @@ void IrrigationModule::loop()
             letzterBekannterTag = heute;
             return;
         }
-
         else if (heute != letzterBekannterTag)
         {
             // plausi, letzerbekannter tag sollte heute -1 sein, bzw 366 zu 1
@@ -63,25 +61,16 @@ void IrrigationModule::loop()
                 if (_channels[i] == nullptr) continue;
                 _channels[i]->process_Bewaesserungsberechnung_channel(ET0_gestern, Regenmenge_gestern, _Sperre_Global);
             }
-        }
-
- 
-        //     // ---- Bewässerungsstart-Trigger (einmal pro Tag) ----
-        // if (BewaesserungszoneBedarf && !BewaesserungszoneVentilOffen && letzterBewaesserungsTag != heute &&
-        //     tmNow.tm_hour == BEWAESSERUNG_START_STUNDE && tmNow.tm_min == 0)
-        // {
-        //     set_Ventil_State(RASENZONE_VENTIL_INDEX, true);
-        //     BewaesserungszoneVentilOffen = true;
-        //     BewaesserungszoneVentilStartMillis = millis();
-        //     letzterBewaesserungsTag = heute;
-        //     SERIAL_DEBUG.print("WB Rasenzone: Bewässerung gestartet, Laufzeit[s]=");
-        //     SERIAL_DEBUG.println(BewaesserungszoneGeplanteLaufzeitSek);
-        // }
+        } 
+        pruefeUndStarteBewaesserungsfenster();
     }
 
-
-
+    for (uint8_t i = 0; i < MIN(ParamIRR_VisibleChannels, IRR_ChannelCount); i++)  
+    {      
+        _channels[i]->loop();
+    }
 }
+
 void IrrigationModule::setup(bool configured)
 {
     logInfoP("setup() START");
@@ -148,15 +137,16 @@ const uint8_t IrrigationModule::_magicWord[IRR_FLASH_MAGIC_WORD_LEN] = {
     'R',
 };
 
-static constexpr uint16_t BEWAESSERUNG_FLASH_SIZE = 4 + 4 + 4 + 1 + 4 + 4 + 4 + 4 + 4;
-// magicYday(4) tmaxToday(4) tminToday(4) todayHasData(1)
-// tmaxYesterday(4) tminYesterday(4) tmeanYesterday(4) regenGestern(4) konto(4)
+// magicYday(4) Tmax_heute(4) Tmin_heute(4) gueltigeWerte_heute(1)
+// Tmax_gestern(4) Tmin_gestern(4) TDurchschnitt_gestern(4) Regenmenge_gestern(4) = 29 Byte
+static constexpr uint16_t IRR_MODULE_FLASH_SIZE = 4 + 4 + 4 + 1 + 4 + 4 + 4 + 4;
+static constexpr uint16_t IRR_CHANNEL_FLASH_SIZE = 4 + 1; // float Wasserbilanzkonto + 1 Byte ZonenStatus
 
 
 uint16_t IrrigationModule::flashSize()
 {
     // [4] Magic Word + [1] Version + [N] 
-    return 4 + 1 + BEWAESSERUNG_FLASH_SIZE;
+    return 4 + 1 + IRR_MODULE_FLASH_SIZE + (IRR_ChannelCount * IRR_CHANNEL_FLASH_SIZE);
 }
 
 
@@ -173,8 +163,6 @@ uint16_t IrrigationModule::flashSize()
     // version
     openknx.flash.writeByte(1);
 
-
-
     uint32_t currentYday = openknx.time.isValid() ? getYearDay() : 0;
 
     openknx.flash.writeInt(currentYday);
@@ -185,7 +173,14 @@ uint16_t IrrigationModule::flashSize()
     openknx.flash.writeFloat(Temperatur_min_gestern);
     openknx.flash.writeFloat(Temperatur_Durchschnitt_gestern);
     openknx.flash.writeFloat(Regenmenge_gestern);
-   // openknx.flash.writeFloat(BewaesserungszoneKonto); // MUSS über Neustart erhalten bleiben! kommt aus dem Channel
+
+
+    // jeder Kanal-Slot wird IMMER geschrieben, unabhängig von VisibleChannels ----
+    for (uint8_t i = 0; i < IRR_ChannelCount; i++)
+    {
+        _channels[i]->save();
+    }
+
     logDebugP("write [done]");
 }
 
@@ -194,9 +189,10 @@ uint16_t IrrigationModule::flashSize()
 void IrrigationModule::readFlash(const uint8_t* data, const uint16_t size)
 {
     logIndentUp();
-    if (size < 4 + 1) // no channels present
+    if (size < flashSize()) // no channels present
     {
         logDebugP("Flash data short!");
+        logDebugP("Flash data short (have %u, need %u)!", size, flashSize());
         return;
     }
     
@@ -241,71 +237,14 @@ void IrrigationModule::readFlash(const uint8_t* data, const uint16_t size)
     }
 
 
-    const uint8_t chDataMaxCount = (size - 4 - 1) / (1);
-    logDebugP("Found %d of %d channels", chDataMaxCount, IRR_ChannelCount);
-    const uint8_t n = MIN(chDataMaxCount, IRR_ChannelCount);
-    for (uint8_t i = 0; i < n; i++)
+    // jeder Kanal-Slot wird IMMER gelesen, unabhängig von VisibleChannels 
+    for (uint8_t i = 0; i < IRR_ChannelCount; i++)
     {
         _channels[i]->restore();
     }
     logDebugP("read [done]");
     logIndentDown();
 }
-
-// void Bewaesserung_readFlash(const uint8_t* buffer, const uint16_t size)
-// {
-//     if (size < BEWAESSERUNG_FLASH_SIZE) return;
-
-//     for (size_t i = 0; i < IRR_FLASH_MAGIC_WORD_LEN; i++)
-//     {
-//         if (openknx.flash.readByte() != _magicWord[i])
-//         {
-//             logDebugP("Wrong magic-word!");
-//             return;
-//         }
-//     }
-
-//     uint32_t magicYday;
-//     float tmaxToday, tminToday, tmaxYesterday, tminYesterday, tmeanYesterday, regenGestern, konto;
-//     uint8_t todayHasData;
-
-//     uint16_t o = 0;
-//     memcpy(&magicYday, buffer + o, 4); o += 4;
-//     memcpy(&tmaxToday, buffer + o, 4); o += 4;
-//     memcpy(&tminToday, buffer + o, 4); o += 4;
-//     memcpy(&todayHasData, buffer + o, 1); o += 1;
-//     memcpy(&tmaxYesterday, buffer + o, 4); o += 4;
-//     memcpy(&tminYesterday, buffer + o, 4); o += 4;
-//     memcpy(&tmeanYesterday, buffer + o, 4); o += 4;
-//     memcpy(&regenGestern, buffer + o, 4); o += 4;
-//     memcpy(&konto, buffer + o, 4);
-
-//     // gestrige Werte gelten unabhängig vom Tag weiterhin als gültige Basis
-//     Temperatur_max_gestern = tmaxYesterday;
-//     Temperatur_min_gestern = tminYesterday;
-//     Temperatur_Durchschnitt_gestern = tmeanYesterday;
-
-//     Regenmenge_gestern = regenGestern;
-//     // BewaesserungszoneKonto = konto; // <- der wichtige Teil: Kontostand übersteht den Neustart je Zone ist im Channelmodul
-
-//     // heutige gespeicherte Werte nur übernehmen, wenn sie tatsächlich von HEUTE sind
-//     if (openknx.time.isValid() && (uint32_t)getYearDay() == magicYday)
-//     {
-//         Temperatur_max_heute = tmaxToday;
-//         Temperatur_min_heute = tminToday;
-//         gueltigeWerte_heute = (todayHasData != 0);
-//         return;
-//     }
-//     else
-
-//     // Zeit noch nicht gültig ODER Tag hat sich seit dem letzten Speichern
-//     // geändert -> heutige Aggregation lieber frisch beginnen, statt
-//     // veraltete/falsche Werte weiterzuschleppen.
-//     Temperatur_max_heute = -4.2;
-//     Temperatur_min_heute = -4.2;
-//     gueltigeWerte_heute = false;
-// }
-
 
 // ---- Tageswechsel: gestern einfrieren, ET0 rechnen, heute zurücksetzen --
 void IrrigationModule::Tageswechsel_Werte_speichern(uint16_t gestern)
@@ -339,6 +278,12 @@ void IrrigationModule::Tageswechsel_Werte_speichern(uint16_t gestern)
 
 uint16_t IrrigationModule::getYearDay(void)
 {
+
+    if (!openknx.time.isValid())
+    {
+        return 0; // Uhr hat noch kein gültiges Datum vom Bus
+    }
+
     // use current time
     tm tmNow;
     openknx.time.getLocalTime().toTm(tmNow);
@@ -347,11 +292,17 @@ uint16_t IrrigationModule::getYearDay(void)
 
 void IrrigationModule::calculateEt0(uint16_t TagdesJahres)
 {
-    RaResult RaErgebnis;
-    RaErgebnis = calc_Ra(TagdesJahres);
-
-    ET0_gestern = calc_ET0(Temperatur_Durchschnitt_gestern, Temperatur_max_gestern, Temperatur_min_gestern, RaErgebnis.ra_mm);
-
+    if (!gueltigeWerte_heute) 
+    { 
+        ET0_gestern = 0.0f; 
+        logDebugP("calculateEt0: keine gültigen Temperaturwerte für gestern, ET0_gestern=0.0");
+    }
+    else
+    {
+        RaResult RaErgebnis;
+        RaErgebnis = calc_Ra(TagdesJahres);
+        ET0_gestern = calc_ET0(Temperatur_Durchschnitt_gestern, Temperatur_max_gestern, Temperatur_min_gestern, RaErgebnis.ra_mm);
+    }  
     // ---- KO-Ausgabe ----
      KoIRR_Berechnung_ET0.value(ET0_gestern, DPT_Value_Temp);
 }
@@ -379,7 +330,14 @@ IrrigationModule::RaResult IrrigationModule::calc_Ra(uint16_t Kalendertag_des_Ja
     float_t Solare_Deklination_delta = 0.409 * sin((2.0 * M_PI / 365.0) * Kalendertag_des_Jahres_J - 1.39);
 
     // Sonnenuntergangswinkel [rad]
-    float_t Sonnenuntergangswinkel_omega_s = acos(-tan(geografischeBreiteRadiant_Phi) * tan(Solare_Deklination_delta));
+    // eigentlich 
+    // float_t Sonnenuntergangswinkel_omega_s = acos(-tan(geografischeBreiteRadiant_Phi) * tan(Solare_Deklination_delta));
+
+    //aber abfangen
+    float arg = -tan(geografischeBreiteRadiant_Phi) * tan(Solare_Deklination_delta);
+    if (arg < -1.0) arg = -1.0;
+    if (arg > 1.0) arg = 1.0;
+    float_t Sonnenuntergangswinkel_omega_s = acos(arg);
 
     // Extraterrestrische Strahlung [MJ/(m²·Tag)]
     float_t Extraterrestrische_Strahlung_Ra = (24.0 * 60.0 / M_PI) * Solarkonstante_Gsc * relativeErdeSonneDistanz_dr * (Sonnenuntergangswinkel_omega_s * sin(geografischeBreiteRadiant_Phi) * sin(Solare_Deklination_delta) + cos(geografischeBreiteRadiant_Phi) * cos(Solare_Deklination_delta) * sin(Sonnenuntergangswinkel_omega_s));
@@ -417,7 +375,6 @@ bool IrrigationModule::get_globaleSperre()
 {
     // gloable Freigaeb abrufen via KO
     return _Sperre_Global;
-    return true;
 }
 
 
@@ -481,4 +438,83 @@ bool IrrigationModule::processCommand(const std::string command, bool diagnose)
 bool IrrigationModule::debug()
 {
     return _debug;
+}
+
+void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
+{
+    tm tmNow;
+    openknx.time.getLocalTime().toTm(tmNow);
+    uint16_t heute = getYearDay();
+
+    if (!_zeitfensterAktiv && _zeitfensterTag != heute &&
+        tmNow.tm_hour == ParamIRR_BewaesserungsstartStunde &&
+        tmNow.tm_min == ParamIRR_BewaesserungsstartMinute)
+    {
+        _zeitfensterAktiv = true;
+        _zeitfensterTag = heute;
+        logInfoP("Bewaesserungsfenster gestartet");
+    }
+
+    if (_zeitfensterAktiv) koordiniereZonenstart();
+}
+
+bool IrrigationModule::sindKompatibel(uint8_t zoneA, uint8_t zoneB)
+{
+    if (zoneA == zoneB) return true; // wird praktisch nie gebraucht, aber sauber definiert
+
+    uint8_t a = MIN(zoneA, zoneB);
+    uint8_t b = MAX(zoneA, zoneB);
+
+    if (a == 1 && b == 2) return ParamIRR_KompatibelZone1Zone2;
+    if (a == 1 && b == 3) return ParamIRR_KompatibelZone1Zone3;
+    if (a == 1 && b == 4) return ParamIRR_KompatibelZone1Zone4;
+    if (a == 1 && b == 5) return ParamIRR_KompatibelZone1Zone5;
+    if (a == 1 && b == 6) return ParamIRR_KompatibelZone1Zone6;
+    if (a == 2 && b == 3) return ParamIRR_KompatibelZone2Zone3;
+    if (a == 2 && b == 4) return ParamIRR_KompatibelZone2Zone4;
+    if (a == 2 && b == 5) return ParamIRR_KompatibelZone2Zone5;
+    if (a == 2 && b == 6) return ParamIRR_KompatibelZone2Zone6;
+    if (a == 3 && b == 4) return ParamIRR_KompatibelZone3Zone4;
+    if (a == 3 && b == 5) return ParamIRR_KompatibelZone3Zone5;
+    if (a == 3 && b == 6) return ParamIRR_KompatibelZone3Zone6;
+    if (a == 4 && b == 5) return ParamIRR_KompatibelZone4Zone5;
+    if (a == 4 && b == 6) return ParamIRR_KompatibelZone4Zone6;
+    if (a == 5 && b == 6) return ParamIRR_KompatibelZone5Zone6;
+
+    return false; // sollte bei 1..6 nie erreicht werden
+}
+
+void IrrigationModule::koordiniereZonenstart(void)
+{
+    bool nochOffenerBedarf = false;
+    bool nochWelcheAmLaufen = false;
+
+    for (uint8_t i = 0; i < _numChannels; i++)
+    {
+        if (_channels[i] == nullptr) continue; // Falls der Kanal nicht existiert (leerer Zeiger) - überspringen
+        if (_channels[i]->laeuftGerade()) { nochWelcheAmLaufen = true; continue; } // Kanalbewässerung läuft - überspringen.
+        if (!_channels[i]->hatOffenenBedarf()) continue; // Kanal hat kein Bedarf - überspringen
+
+        nochOffenerBedarf = true;
+        bool startenErlaubt = true;
+
+        // Bevor Kanal i gestartet wird, muss geprüft werden, ob er sich mit den Kanälen verträgt, die aktuell schon laufen.
+        for (uint8_t j = 0; j < _numChannels; j++)
+        {
+            if (j == i || _channels[j] == nullptr || !_channels[j]->laeuftGerade()) continue; // Es werden nur Kanäle j betrachtet, die ungleich i sind und gerade aktiv laufen.
+                if (!sindKompatibel(i + 1, j + 1))  // Hier wird geprüft, ob Kanal i und der laufende Kanal j gleichzeitig aktiv sein dürfen
+                {
+                    startenErlaubt = false; // Start verbieten, nicht kompatibel
+                    break;                  // Weitere Prüfung nicht nötig, da bereits inkompatibel
+                }
+        }
+
+        if (startenErlaubt) _channels[i]->starteBewaesserung();
+    }
+
+    if (!nochOffenerBedarf && !nochWelcheAmLaufen)
+    {
+        _zeitfensterAktiv = false;
+        logInfoP("Bewaesserungsfenster beendet - alle Zonen abgearbeitet");
+    }
 }

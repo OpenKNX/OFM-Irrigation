@@ -28,7 +28,7 @@ class IrrigationModule : public OpenKNX::Module
     uint16_t flashSize() override;
     void writeFlash() override;
     void readFlash(const uint8_t *iBuffer, const uint16_t iSize) override;
-
+    
 
 
 
@@ -42,7 +42,7 @@ class IrrigationModule : public OpenKNX::Module
     float letzteEmpfangeneTemperatur = 0;
     float letzteRegenmengeHeute = 0.0f;
     int16_t letzterBekannterTag = -1; // -1 = "noch nie gesehen"
-    int16_t letzterBewaesserungsTag = -1;
+  
 
     
     struct RaResult
@@ -67,7 +67,14 @@ class IrrigationModule : public OpenKNX::Module
     float Temperatur_Durchschnitt_gestern = -42.0;
     float Regenmenge_gestern = 0.0f;
 
-        // Eingänge vom Bus
+
+    bool _zeitfensterAktiv = false;
+    int16_t _zeitfensterTag = -1; // verhindert Mehrfachstart am selben Tag
+
+    bool sindKompatibel(uint8_t zoneA, uint8_t zoneB);
+    void pruefeUndStarteBewaesserungsfenster(void);
+    void koordiniereZonenstart(void);
+
     void process_Temperatur_Wetterstation(float aktuelleTemperatur);
     void process_Regenmenge_Wetterstation(float regenmengeHeuteMm);
     uint16_t getYearDay(void); // liefert J, 1-basiert (1..366)

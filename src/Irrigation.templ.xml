@@ -21,14 +21,14 @@
               <Parameter Id="%AID%_P-%TT%%CC%002" Name="Ch%C%Number" ParameterType="%AID%_PT-ValueDpt5" Text="Nummer des Zone" Value="%C%" Access="None" />
               
             
-           <!-- Memory Layout
+              <!-- Memory Layout
               Union SizeInBit="48" (6 Bytes, Offset 0-8)
-                ├── Byte 0: Flags-A (Active, KOs anaus)
+                ├── Byte 0: Flags-A (Active, KOs anaus: Schwellwert benutzen, nFK benutzen, Kc benutzen, Bodenfeuchte benutzen)
                 ├── Byte 1: Niederschlagsrate
                 ├── Byte 2: SchwellwertValue
                 ├── Byte 3: Nutzbare Feldkapazität
                 ├── Byte 4: Kc-Faktor
-                ├── Byte 5: leer
+                ├── Byte 5: Sperrschwelle Bodenfeuchte
                   -->
               <Union SizeInBit="48">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
@@ -41,7 +41,7 @@
                 <Parameter Id="%AID%_UP-%TT%%CC%006" Name="CH%C%SchwellwertViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="Schwellwert über KO vorgeben?" Offset="0" BitOffset="3" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%008" Name="CH%C%nFKViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="nFK über KO vorgeben?" Offset="0" BitOffset="4" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%010" Name="CH%C%KcViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="Kc über KO vorgeben?" Offset="0" BitOffset="5" Value="0" />
-                <!-- Bit6 und Bit7: reserviert -->
+                <Parameter Id="%AID%_UP-%TT%%CC%012" Name="Ch%C%BodenfeuchteVerwendung"  ParameterType="%AID%_PT-IRRBodenfeuchteVerwendung" Text="Bodenfeuchtesensor verwenden als"  Offset="0" BitOffset="6" Value="0" />
 
                 <!-- Byte 1: Niederschlagsrate -->  
                 <Parameter Id="%AID%_UP-%TT%%CC%005" Name="CH%C%NiederschlagsrateValue" ParameterType="%AID%_PT-IRRNiederschlagsrate" Text="Niederschlagsrate der Zone [mm/h]" Offset="1" BitOffset="0" Value="100" />
@@ -51,7 +51,8 @@
                 <Parameter Id="%AID%_UP-%TT%%CC%009" Name="CH%C%nFKValue" ParameterType="%AID%_PT-IRRnFK" Text="Nutzbare Feldkapazität (nFK) [mm]" Offset="3" BitOffset="0" Value="250" />
                 <!-- Byte 4: Kc-Faktor -->  
                 <Parameter Id="%AID%_UP-%TT%%CC%011" Name="CH%C%KcValue" ParameterType="%AID%_PT-IRRKc" Text="Kc-Faktor der Zone" Offset="4" BitOffset="0" Value="80" />
-                <!-- Byte 5: leer --> 
+                <!-- Byte 5: Sperrschwelle Bodenfeuchte -->
+                <Parameter Id="%AID%_UP-%TT%%CC%013" Name="Ch%C%SperrschwelleBodenfeuchte" ParameterType="%AID%_PT-IRRSchwellwert" Text="Sperrschwelle Bodenfeuchte [%]" Offset="5" BitOffset="0" Value="80" />
               </Union>
             </Parameters>
 
@@ -68,6 +69,8 @@
               <ParameterRef Id="%AID%_UP-%TT%%CC%009_R-%TT%%CC%00901" RefId="%AID%_UP-%TT%%CC%009" SuffixText="mm" /> <!-- nFKValue -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001" RefId="%AID%_UP-%TT%%CC%010" /> <!-- KcValue via KO  -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_UP-%TT%%CC%011" SuffixText="" /> <!-- KcValue -->
+              <ParameterRef Id="%AID%_UP-%TT%%CC%012_R-%TT%%CC%01201" RefId="%AID%_UP-%TT%%CC%012" /> <!-- BodenfeuchteVerwendung -->
+              <ParameterRef Id="%AID%_UP-%TT%%CC%013_R-%TT%%CC%01301" RefId="%AID%_UP-%TT%%CC%013" SuffixText="%" /> <!-- Sperrschwelle Bodenfeuchte -->
             </ParameterRefs>
 
           
@@ -92,6 +95,8 @@
               <ComObject Id="%AID%_O-%TT%%CC%022" Name="Ch%C%DiagnoseBewaesserunggesperrt"  Text="Zone %C%: Bewässerung gesperrt" FunctionText="Diagnose: Bewaesserung gesperrt" Number="%K22%" ObjectSize="1 Bit" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
             
               <ComObject Id="%AID%_O-%TT%%CC%023" Name="Ch%C%Ventilansteuerung" Text="Zone %C%: Ventilansteuerung"  FunctionText="Ausgang Ventil ein/aus" Number="%K23%" ObjectSize="1 Bit"  ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled"  TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%024" Name="Ch%C%Bodenfeuchte" Text="Zone %C%: Bodenfeuchte"  FunctionText="Eingang Bodenfeuchte" Number="%K24%" ObjectSize="2 Bytes"  ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-7" />
+              <ComObject Id="%AID%_O-%TT%%CC%025" Name="Ch%C%ZonenStatus" Text="Zone %C%: Zonenstatus" FunctionText="Ausgang Zonenstatus" Number="%K25%" ObjectSize="14 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-16-1" />
             </ComObjectTable>
 
             <ComObjectRefs>
@@ -107,6 +112,8 @@
               <ComObjectRef Id="%AID%_O-%TT%%CC%019_R-%TT%%CC%01901" RefId="%AID%_O-%TT%%CC%019" />              <!-- Laufzeit% -->
               <ComObjectRef Id="%AID%_O-%TT%%CC%020_R-%TT%%CC%02001" RefId="%AID%_O-%TT%%CC%020" />              <!-- Wasserbilanzkonto -->
               <ComObjectRef Id="%AID%_O-%TT%%CC%023_R-%TT%%CC%02301" RefId="%AID%_O-%TT%%CC%023" />              <!-- Zone Ventilansteuerung -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%024_R-%TT%%CC%02401" RefId="%AID%_O-%TT%%CC%024" />              <!-- Zone Bodenfeuchte -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%025_R-%TT%%CC%02501" RefId="%AID%_O-%TT%%CC%025" />              <!-- Zonenstatus -->
             </ComObjectRefs>
           </Static>
 
@@ -134,6 +141,7 @@
                         <ComObjectRefRef RefId="%AID%_O-%TT%%CC%021_R-%TT%%CC%02101" />                    <!-- Status Magentventil-->
                         <ComObjectRefRef RefId="%AID%_O-%TT%%CC%022_R-%TT%%CC%02201" />                    <!--  Diagnose_Bewaesserung_gesperrt -->
                         <ComObjectRefRef RefId="%AID%_O-%TT%%CC%023_R-%TT%%CC%02301" />                    <!-- Zone Ventilansteuerung -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%025_R-%TT%%CC%02501" />                    <!-- Zonenstatus -->
 
                         <ParameterSeparator Id="%AID%_PS-nnn" Text="Zonenparameter" UIHint="Headline" />
 
@@ -169,6 +177,26 @@
                             <ComObjectRefRef RefId="%AID%_O-%TT%%CC%013_R-%TT%%CC%01301" />                    <!-- Kc -->
                           </when>
                         </choose>
+
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Bodenfeuchtesensor benutzen" UIHint="Headline" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%012_R-%TT%%CC%01201" IndentLevel="1" />
+                        <choose ParamRefId="%AID%_UP-%TT%%CC%012_R-%TT%%CC%01201"> <!-- Ch%C%BodenfeuchteVerwendung -->
+                          <when test="0"> <!-- Nicht verwendet -->
+                            <ParameterSeparator Id="%AID%_PS-nnn" Text="Der Bodenfeuchtesensor wird nicht verwendet." />
+                          </when>
+                          <when test="1"><!--Bodenwasserkonto korrigieren-->
+                            <ComObjectRefRef RefId="%AID%_O-%TT%%CC%024_R-%TT%%CC%02401" />                    <!-- Bodenfeuchte -->
+                            <ParameterSeparator Id="%AID%_PS-nnn" Text="Der Sensorwert überschreibt die Bodenfeuchte aus dem berechneten Modell." />
+                          </when>
+                          <when test="2"> <!--Zusätzliche Sicherheitsbedingung-->
+                            <ParameterRefRef RefId="%AID%_UP-%TT%%CC%013_R-%TT%%CC%01301" IndentLevel="1" /><!-- Sperrschwelle Bodenfeuchte -->
+                            <ComObjectRefRef RefId="%AID%_O-%TT%%CC%024_R-%TT%%CC%02401" />                    <!-- Bodenfeuchte -->
+                            <ParameterSeparator Id="%AID%_PS-nnn" Text="Ist der Boden zu 'nass' sperrt dies die Bewässerung, auch wenn das Modell einen Bedarf berechnet hat." />
+                          </when>
+                        </choose>
+                        
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
 
                       </when>
                     </choose>

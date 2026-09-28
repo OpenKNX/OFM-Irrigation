@@ -369,21 +369,33 @@ $$
 
 # 8. Sperre
 
-Der errechnete Bedarf allein darf die Bewässerung noch nicht unmittelbar starten.
+Der errechnete Bedarf allein darf die Bewässerung noch nicht unmittelbar starten. Er wird mit den Sperr-Bedingungen verknüpft, die unabhängig vom Wasserstand eine Bewässerung verhindern können.
 
-Die eigentliche Sperre wird mit den bestehenden Bedingungen verknüpft:
+Zunächst wird ermittelt, ob überhaupt eine Sperre vorliegt:
 
 $$
-Diagnose_Bewaesserung_gesperrt
+Diagnose_{\mathrm{gesperrt}}
+=
+\left(
+Sperre_{\mathrm{Zone}}
+\land
+Sperre_{\mathrm{Global}}
+\right)
+\lor
+Sperre_{\mathrm{Boden}}
+$$
+
+Erst daraus ergibt sich, ob tatsächlich mit der Berechnung von Fehlmenge und Laufzeit fortgefahren wird:
+
+$$
+Weiter\_zur\_Fehlmenge
 =
 Bedarf
 \land
-Globale\_Sperre
-\land
-Zonen\_Sperre
+\lnot\, Diagnose_{\mathrm{gesperrt}}
 $$
 
-`Globale_Sperre` (geräteweit, ein KO) kann beispielsweise weitere Bedingungen enthalten:
+`Sperre_Global` (geräteweit, ein KO) kann beispielsweise folgende Bedingungen abbilden:
 
 * Bewässerungsanlage gesperrt
 * Sperrzeit
@@ -391,9 +403,12 @@ $$
 * nicht ausreichender Wasserdruck
 * sonstige Anlagenbedingungen
 
-`Zonen_Sperre` (pro Zone, ein eigenes KO) erlaubt zusätzlich, einzelne Zonen unabhängig voneinander stillzulegen (z. B. eine frisch gesäte Fläche, eine Baustelle im Beet), ohne die globale Sperre für die ganze Anlage zu deaktivieren.
+`Sperre_Zone` (pro Zone, ein eigenes KO) erlaubt zusätzlich, einzelne Zonen unabhängig voneinander stillzulegen (z. B. eine frisch gesäte Fläche, eine Baustelle im Beet), ohne die globale Sperre für die ganze Anlage zu aktivieren.
 
-Damit bleibt die Wasserbilanz für die **Bedarfsermittlung** zuständig, während die eigentliche Anlagenfreigabe separat behandelt wird.
+`Sperre_Boden` ist optional und kommt vom Bodenfeuchtesensor, siehe Abschnitt 21.3.
+
+
+Damit bleibt die Wasserbilanz für die **Bedarfsermittlung** zuständig, während die eigentliche Sperr-Logik separat behandelt wird.
 
 ---
 
@@ -497,6 +512,8 @@ $$
 
 In einer realen Anlage kann die tatsächliche Wasserabgabe jedoch von der theoretischen Niederschlagsrate abweichen.
 
+**In der Firmware** wird für diese Rückbuchung nicht die geplante, sondern die über die Ventil-Rückmeldung **tatsächlich gemessene Laufzeit** verwendet (siehe Abschnitt 20.2) – das fängt auch Fälle ab, in denen die Bewässerung früher oder später endet als ursprünglich berechnet.
+
 ---
 
 # 12. Niederschlagsrate der Bewässerung
@@ -584,18 +601,17 @@ $$
 # 14. Zusammenspiel der Sensoren
 
 | Sensor / Datenquelle        | Verwendung                                                     |
-| --------------------------- | -------------------------------------------------------------- |
+| --------------------------- | ---------------------------------------------------------------|
 | **Temperaturstation**       | \(T_{\min}\), \(T_{\max}\), \(T_{\mathrm{mean}}\) für \(ET_0\) |
-| **Datum / Kalendertag**     | Berechnung von \(R_a\)
-| **Regenmesser ** | tatsächlicher Niederschlag, geräteweit ein Eingang             |
-| **Bewässerungsanlage**      | definierte Niederschlagsrate je Zone                           |
-| **Zonenparameter**          | \(K_c\), \(nFK\), \(p\)                                        |
-| **Globale Freigabe**        | geräteweite Sicherheitsbedingungen der Anlage                  |
-| **Zonenfreigabe**           | zusätzliche, je Zone einzeln schaltbare Freigabe               |
+| **Datum / Kalendertag**     | Berechnung von \(R_a\)                                          |
+| **Regenmesser**             | tatsächlicher Niederschlag, geräteweit ein Eingang              |
+| **Bewässerungsanlage**      | definierte Niederschlagsrate je Zone                            |
+| **Zonenparameter**          | \(K_c\), \(nFK\), \(p\)                                         |
+| **Globale Sperre**          | geräteweite Sperr-Bedingungen der Anlage                        |
+| **Zonensperre**             | zusätzliche, je Zone einzeln schaltbare Sperre                  |
+| **Bodenfeuchtesensor**      | optional, siehe Abschnitt 21                                    |
 
-Das Modell benötigt somit keine direkte Bodenfeuchtemessung, sondern simuliert den Wasserhaushalt anhand von **Wetter, Niederschlag und Vegetation**.
-
-Ein Bodenfeuchtesensor kann später optional zur **Validierung und Kalibrierung** eingesetzt werden.
+Das Modell benötigt somit keine direkte Bodenfeuchtemessung, sondern simuliert den Wasserhaushalt anhand von **Wetter, Niederschlag und Vegetation**. Ein Bodenfeuchtesensor kann zusätzlich zur **Korrektur oder als Sicherheitsbedingung** eingesetzt werden (Abschnitt 21).
 
 ---
 
@@ -638,9 +654,9 @@ Der tägliche Berechnungsablauf lässt sich auf folgende Schritte reduzieren:
              ┌─────────────┐
              │ Globale +   │
              │ Zonen-      │
-             │ freigabe?   │
+             │ Sperre?     │
              └──────┬──────┘
-                    │ Ja
+                    │ Nein
                     ▼
              ┌─────────────┐
              │ Fehlmenge   │
@@ -705,7 +721,7 @@ $$
 Bodenwasserkonto < p \cdot nFK
 $$
 
-Wenn diese Bedingung erfüllt ist und Globale Freigabe **und** Zonenfreigabe aktiv sind, wird bewässert.
+Wenn diese Bedingung erfüllt ist und keine Sperre vorliegt (Abschnitt 8), wird bewässert.
 
 Damit wird aus einem reinen Wettermodell eine **Wasserbilanzsteuerung**.
 
@@ -730,15 +746,7 @@ Die größten Unsicherheiten liegen dabei wahrscheinlich bei \(nFK\) und \(K_c\)
 
 ### Bodenfeuchtesensor
 
-Ein Bodenfeuchtesensor kann verwendet werden, um die modellierte Wasserbilanz mit der tatsächlichen Bodenfeuchte zu vergleichen.
-
-Damit könnten beispielsweise:
-
-$$
-nFK,\quad K_c,\quad p
-$$
-
-nach einigen Wochen Praxisbetrieb angepasst werden.
+Umgesetzt, siehe Abschnitt 21: Ein Bodenfeuchtesensor kann verwendet werden, um die modellierte Wasserbilanz mit der tatsächlichen Bodenfeuchte zu vergleichen, das Konto direkt zu korrigieren, oder als zusätzliche Sicherheitsbedingung zu dienen.
 
 ---
 
@@ -859,9 +867,9 @@ Wasser zurück auf Konto buchen
 
 ---
 
-# 20. Umsetzung in der GardenControl-Firmware
+# 20. Umsetzung in der `OFM-Irrigation`-Firmware
 
-Die vorstehenden Abschnitte beschreiben das fachliche Modell unabhängig von der konkreten Implementierung. Dieser Abschnitt ordnet es der tatsächlichen Firmware zu (Datei `Bewaesserung.cpp`/`.h`) und dem ETS-Parametermodell (`Bewaesserung.share.xml`/`.templ.xml`).
+Die vorstehenden Abschnitte beschreiben das fachliche Modell unabhängig von der konkreten Implementierung. Dieser Abschnitt ordnet es der tatsächlichen Firmware zu (`IrrigationModule`/`IrrigationChannel`) und dem ETS-Parametermodell (`Irrigation.share.xml`/`.templ.xml`).
 
 ## 20.1 Geräteweit vs. je Zone
 
@@ -873,7 +881,9 @@ Konsequent aus Abschnitt 3 und 14 abgeleitet, sind in der ETS zwei Ebenen getren
 | ---------------------------------- | -------------------------------------- |
 | Eingang: Aktuelle Temperatur       | \(T\), fließt in Tmin/Tmax/Tmean ein   |
 | Eingang: Regenmenge heute          | *Niederschlag* aus Abschnitt 4         |
-| Eingang: Globale Sperre          | *Globale_Sperre* aus Abschnitt 8     |
+| Eingang: Globale Sperre            | *Sperre_Global* aus Abschnitt 8        |
+| Parameter: Bewässerungsfenster (Start-Stunde/-Minute) | *04:00/05:00 Uhr* aus Abschnitt 15 |
+| Parameter: Zonen-Kompatibilitätsmatrix | steuert, welche Zonen gleichzeitig laufen dürfen (Abschnitt 20.3) |
 | Ausgang: ET0 [mm/Tag]              | \(ET_0\) aus Abschnitt 2               |
 | Ausgang: Diagnose Tmax/Tmin/Tmean heute/gestern | Zwischenwerte der Tagesaggregation |
 
@@ -885,11 +895,15 @@ Konsequent aus Abschnitt 3 und 14 abgeleitet, sind in der ETS zwei Ebenen getren
 | Parameter/KO: Schwellwert [%]        | \(p\) aus Abschnitt 6              |
 | Parameter/KO: nFK [mm]               | \(nFK\) aus Abschnitt 5            |
 | Parameter/KO: Kc-Faktor              | \(K_c\) aus Abschnitt 3            |
-| Eingang: ZonenSperre               | *Zonen_Sperre* aus Abschnitt 8   |
+| Eingang: Zonensperre                 | *Sperre_Zone* aus Abschnitt 8      |
+| Eingang: Status Magnetventil         | Ventil-Rückmeldung, siehe 20.2     |
+| Eingang: Bodenfeuchte (optional)     | siehe Abschnitt 21                 |
 | Ausgang: Bewässerungsbedarf          | *Bedarf* aus Abschnitt 7           |
 | Ausgang: Fehlmenge [mm]              | *Fehlmenge* aus Abschnitt 9        |
 | Ausgang: Laufzeit [s]                | *Laufzeit_Sek* aus Abschnitt 10    |
 | Ausgang: Wasserbilanzkonto [mm]      | *Konto* aus Abschnitt 4            |
+| Ausgang: Ventilansteuerung           | Schaltbefehl an den Aktor          |
+| Ausgang: Diagnose Bewässerung gesperrt | *Diagnose_gesperrt* aus Abschnitt 8 |
 
 Die vier Zonenparameter (Niederschlagsrate, Schwellwert, nFK, Kc) sind jeweils **entweder** als ETS-Parameter fest vorgegeben **oder** per KO zur Laufzeit überschreibbar (z. B. für einen saisonal veränderlichen Kc-Wert aus Home Assistant) – umschaltbar über "... über KO vorgeben?" auf der jeweiligen Zonenseite.
 
@@ -909,27 +923,141 @@ Anders als eine klassische ETS-Logikschaltung mit Zeitschaltuhr-Baustein nutzt d
 00:00 Uhr  ET0 berechnen (Abschnitt 2, mit J = Kalendertag des ABGELAUFENEN Tages)
            │
            ▼
-00:00 Uhr  je Zone: ETc, Bodenwasserkonto, Schwellwert, Bedarf berechnen (Abschnitt 3-7)
+00:00 Uhr  je Zone: ETc, Bodenwasserkonto, Schwellwert, Bedarf berechnen (Abschnitt 3-8)
            │
-           ├─ Bedarf = 0  → keine weitere Aktion, nächster Vergleich erst morgen
+           ├─ Bedarf = 0 oder gesperrt → keine weitere Aktion, nächster Vergleich erst morgen
            │
-           └─ Bedarf = 1  → Fehlmenge und Laufzeit berechnen und für den
-                            Bewässerungsstart vormerken (Abschnitt 9-10)
-           │
-           ▼
-04:00/05:00 Uhr (parametrierbar)
-           Globale Sperre UND ZonenSperre UND Bedarf?
-           │
-           └─ Ja → Ventil öffnen, für die vorgemerkte Laufzeit
+           └─ Bedarf = 1  → Fehlmenge und Laufzeit berechnen und für den Bewässerungsstart vormerken, Zone wechselt in Status "WartetAufStart"
            │
            ▼
-Laufzeit abgelaufen
-           Ventil schließen, zugeführte Wassermenge zurückbuchen (Abschnitt 11)
+Bewässerungsfenster erreicht (parametrierbar, z. B. 04:00 Uhr)
+           IrrigationModule koordiniert den Start: pro Zone mit offenem Bedarf wird
+           geprüft, ob sie mit allen GERADE laufenden Zonen kompatibel ist
+           (Abschnitt 20.3) - erst dann Ventilansteuerung auf "Ein"
+           │
+           ▼
+Geplante Laufzeit abgelaufen
+           Ventilansteuerung auf "Aus", Zone wechselt in Status
+           "WartetAufRueckmeldung"
+           │
+           ▼
+Fallende Flanke der echten Ventil-Rückmeldung ("Status Magnetventil")
+           → tatsächlich gemessene Laufzeit auswerten, zugeführte Wassermenge
+             zurückbuchen (Abschnitt 11), Zone wechselt in Status "Abgeschlossen"
            → neuer Kontostand ist Ausgangspunkt für den nächsten Tageswechsel
 ```
 
-Zwei Entscheidungen, die von einer wörtlichen 1:1-Umsetzung der Formeln abweichen und hier bewusst dokumentiert sind:
+Entscheidungen, die von einer wörtlichen 1:1-Umsetzung der Formeln abweichen und hier bewusst dokumentiert sind:
 
 * **ET0 wird mit dem Kalendertag des *abgelaufenen* Tages berechnet**, nicht mit dem Tag, an dem die Berechnung tatsächlich läuft (00:00 Uhr ist ja bereits der neue Tag). Da sich die astronomischen Zwischenwerte (`dr`, `δ`, `ωs`) von Tag zu Tag nur minimal ändern, wäre der Unterschied in der Praxis vernachlässigbar – exakt ist es trotzdem nur mit dem richtigen Tag.
-* **Rückbuchung erfolgt zeitgesteuert (abgelaufene Laufzeit), nicht über einen Ventil-Status-Bus-Rückmeldewechsel** – da die Firmware das Ventil selbst öffnet und schließt, ist kein zusätzlicher Bus-Roundtrip nötig, um zu wissen, wann die Bewässerung beendet ist.
+* **Rückbuchung erfolgt anhand der echten Ventil-Rückmeldung, nicht anhand der geplanten Laufzeit.** Der Grund: `OFM-Irrigation` schaltet kein Ventil selbst und kann daher nicht sicher wissen, wann die Bewässerung tatsächlich beginnt oder endet. Eine steigende Flanke der Rückmeldung startet die Zeitmessung, die fallende Flanke beendet sie – das erfasst auch Fälle, in denen die Bewässerung früher oder später endet als geplant.
+* **Läuft die Rückmeldung nie ein**, greift ein Timeout (Standard 60 s nach Ablauf der geplanten Laufzeit): die Zone wechselt in einen Fehlerstatus, die Ventilansteuerung wird sicherheitshalber nochmals explizit auf "Aus" gesetzt.
 
+## 20.3 Koordination mehrerer Zonen
+
+Nicht alle Zonen dürfen zwangsläufig gleichzeitig laufen (z. B. wegen begrenztem Wasserdruck). `IrrigationModule` verwaltet dafür eine geräteweite Kompatibilitätsmatrix (ein Kontrollkästchen pro Zonenpaar, z. B. "Zone 1 + Zone 2"). Beim Start einer Zone mit offenem Bedarf wird geprüft, ob sie mit **jeder aktuell laufenden** Zone als kompatibel markiert ist – nur dann wird sie gestartet. Andernfalls wartet sie, bis eine der laufenden Zonen fertig ist, und wird beim nächsten Durchlauf erneut geprüft.
+
+---
+
+# 21. Bodenfeuchtesensor (optional)
+
+Das Modell aus den Abschnitten 2–11 arbeitet rein rechnerisch: Es kennt weder den tatsächlichen Wassergehalt des Bodens noch Regen, den der Regenmesser verpasst hat. Ein Bodenfeuchtesensor liefert dafür einen Messwert, mit dem sich das Modell absichern oder korrigieren lässt.
+
+Der Sensor ist **je Zone** einstellbar. Er wird über ein Kommunikationsobjekt *Bodenfeuchte* (DPT 9.007, Wert in %) eingelesen. Wie der Wert verwendet wird, legt der ETS-Parameter **"Bodenfeuchtesensor verwenden als"** fest:
+
+| Einstellung | Wirkung |
+| --- | --- |
+| **Nicht verwendet** | Der Sensor wird ignoriert. Die Wasserbilanz läuft rein modellbasiert. |
+| **Bodenwasserkonto korrigieren** | Der Messwert ersetzt beim Tageswechsel den errechneten Kontostand. |
+| **Zusätzliche Sicherheitsbedingung** | Das Modell bleibt führend. Der Sensor kann eine Bewässerung nur verhindern (`Sperre_Boden` aus Abschnitt 8). |
+
+## 21.1 Einordnung im Tagesablauf
+
+Der Sensorwert wird einmal täglich beim Tageswechsel ausgewertet, im selben Schritt wie die Fortschreibung des Bodenwasserkontos (Abschnitt 4). Verwendet wird der **zuletzt empfangene** Wert. Zwischen zwei Tageswechseln eintreffende Werte werden nur gespeichert.
+
+```text
+Konto (Modell) = clamp( Konto_alt + Niederschlag − ETc, 0, nFK )
+        │
+        ├─ Modus "korrigieren":  Konto := Konto_gemessen
+        │
+        ▼
+Schwellwert prüfen → Bedarf
+        │
+        ├─ Modus "Sicherheitsbedingung":  Sperre_Boden, falls Bodenfeuchte ≥ Sperrschwelle
+        ▼
+Sperre prüfen (Abschnitt 8) → Fehlmenge → Laufzeit
+```
+
+## 21.2 Modus "Bodenwasserkonto korrigieren"
+
+Das Modell wird beim Tageswechsel auf den gemessenen Wert "eingerastet":
+
+$$
+Konto_{\mathrm{gemessen}}
+=
+\frac{\theta}{100}
+\cdot
+nFK
+$$
+
+Dabei ist \(\theta\) die gemessene Bodenfeuchte in %, begrenzt auf den Bereich 0–100 %, bevor sie in die Formel eingesetzt wird. Alle folgenden Schritte (Schwellwert, Bedarf, Fehlmenge, Laufzeit) rechnen mit diesem Wert weiter.
+
+**Voraussetzung an den Sensor:** Die Formel behandelt \(\theta\) als *relativen Füllstand der nutzbaren Feldkapazität* – 100 % entspricht dem vollen Speicher (\(nFK\)), 0 % dem permanenten Welkepunkt. Ein roher Sensormesswert (z. B. eine Spannung) erfüllt das in aller Regel nicht direkt. Der eingesetzte Sensor SEN0308 (Abschnitt 21.6) liefert beispielsweise einen Wert, der umgekehrt proportional zur Feuchte ist und nur durch eine Kalibrierung *im eigenen Boden* – nicht durch die werksseitige Luft/Wasser-Kalibrierung – in diesen relativen Füllstand umgerechnet werden kann. Ohne passende Kalibrierung ist das errechnete Konto systematisch falsch.
+
+**Vorteil:** Modellfehler korrigieren sich selbst, etwa ein falscher \(K_c\), verpasster Regen oder eine ungenaue Niederschlagsrate.
+
+**Nachteil:** Die Vorhersagefähigkeit geht teilweise verloren. Der Vorteil von \(ET_0\) und \(K_c\) ist ja gerade, den Bedarf zu erkennen, *bevor* der Boden trocken ist. Ein Messwert bildet nur den Ist-Zustand ab.
+
+## 21.3 Modus "Zusätzliche Sicherheitsbedingung"
+
+Die Wasserbilanz bleibt unverändert führend. Der Sensor kann eine Bewässerung jedoch verhindern:
+
+$$
+Sperre_{\mathrm{Boden}}
+=
+\left(
+\theta \ge Sperrschwelle
+\right)
+$$
+
+Zusätzlicher Parameter: **"Sperrschwelle Bodenfeuchte"** in % (Standard 80 %). Das Bodenwasserkonto selbst wird in diesem Modus **nicht** verändert – es wird lediglich verhindert, dass bewässert wird, obwohl der Boden bereits ausreichend feucht ist. \(Sperre_{\mathrm{Boden}}\) fließt in die Gesamt-Sperre aus Abschnitt 8 ein.
+
+Typische Fälle, die dieser Modus abfängt: Regen, den ein weit entfernter Regenmesser nicht erfasst hat, oder eine zu hoch eingestellte Niederschlagsrate.
+
+## 21.4 Verhalten ohne oder bei fehlendem Sensorwert
+
+- Solange seit dem Start **noch kein** Wert empfangen wurde, ist der Sensor wirkungslos. Beide Modi verhalten sich dann wie "Nicht verwendet".
+- Bleibt der Sensor später stumm (Ausfall, Batterie leer), wird der **zuletzt empfangene Wert weiterverwendet**. Eine Erkennung von "seit X Tagen keine Meldung" gibt es aktuell nicht. Im Modus "Sicherheitsbedingung" kann ein eingefrorener "feucht"-Wert die Bewässerung dauerhaft verhindern.
+- Die Bodenfeuchte wird nicht im Flash gesichert. Nach einem Neustart gilt der Sensor bis zum nächsten empfangenen Wert wieder als "ungültig".
+
+## 21.5 Praktische Hinweise
+
+- Die Sensorposition muss zur Zone passen: im durchwurzelten Bereich, nicht direkt neben einem Tropfer oder Sprinkler, sonst wird die Zone systematisch zu feucht gemessen.
+- Empfohlene Einführung: zuerst einige Wochen im Modus **"Sicherheitsbedingung"** betreiben und dabei Modellkonto und Messwert vergleichen. Weichen beide dauerhaft ab, deutet das auf falsche Werte für \(nFK\) oder \(K_c\) hin (siehe Abschnitt 17). Diese lassen sich dann nachjustieren, ohne die Regelung selbst vom Sensor abhängig zu machen.
+- Für den Modus "Bodenwasserkonto korrigieren" sollte der Sensor kalibriert sein (siehe 21.2 und 21.6), sonst verschlechtert er das Ergebnis eher, als er es verbessert.
+
+## 21.6 Eingesetzter Sensor: DFRobot SEN0308
+
+Als Sensor kommt der wasserdichte, kapazitive Bodenfeuchtesensor **SEN0308** zum Einsatz (Versorgung 3,3–5,5 V, Analogausgang 0–2,9 V). Er wird an einen Analogeingang des GardenControl angeschlossen.
+
+**Eigenschaften**
+
+* Der Ausgang ist umgekehrt proportional zur Feuchte: trocken hoch, nass niedrig.
+* Der Sensor erfasst nur die *relative* Feuchte. Bodenart, Verdichtung und Einstecktiefe beeinflussen den Wert.
+* Nach dem Umsetzen des Sensors ändert sich die Kennlinie. Danach ist neu zu kalibrieren.
+
+**Kalibrierung**
+
+Die Zwei-Punkt-Kalibrierung des Herstellers (Luft und Wasser) reicht für den Modus "Bodenwasserkonto korrigieren" nicht aus, weil im Boden auch bei Feldkapazität nie der Wasserwert erreicht wird. Kalibriert wird deshalb im eingebauten Zustand:
+
+1. **Trockenpunkt** (\(U_{\mathrm{trocken}}\)): Spannung bei ausgetrocknetem Boden (≈ 0 % nutzbarer Füllstand).
+2. **Feldkapazität** (\(U_{\mathrm{FK}}\)): Zone gründlich durchfeuchten, ein bis zwei Tage abtropfen lassen, dann Spannung ablesen (≈ 100 %).
+3. Steigung \(m\) und Achsenabschnitt \(b\) der Geradengleichung des Analogeingangs berechnen:
+
+$$
+m = \frac{-100}{U_{\mathrm{trocken}} - U_{\mathrm{FK}}}
+\qquad
+b = \frac{100 \cdot U_{\mathrm{trocken}}}{U_{\mathrm{trocken}} - U_{\mathrm{FK}}}
+$$
+
+Die Kalibrierung beeinflusst nur den Modus "Bodenwasserkonto korrigieren". Im Modus "Zusätzliche Sicherheitsbedingung" genügt eine empirisch gewählte Sperrschwelle: Wert einige Stunden nach einer normalen Bewässerung ablesen und die Schwelle knapp darunter legen.

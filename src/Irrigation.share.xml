@@ -45,6 +45,13 @@
               <ParameterType Id="%AID%_PT-IRRMinute" Name="IRRMinute">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="59" />
               </ParameterType>
+              <ParameterType Id="%AID%_PT-IRRBodenfeuchteVerwendung" Name="IRRBodenfeuchteVerwendung" op:headerExport="enum" op:headerName="BodenfeuchteVerwendung">
+                <TypeRestriction Base="Value" SizeInBit="2">
+                  <Enumeration Text="Nicht verwendet"                  Value="0" Id="%ENID%" op:headerName="Aus" />
+                  <Enumeration Text="Bodenwasserkonto korrigieren"      Value="1" Id="%ENID%" op:headerName="Korrektur" />
+                  <Enumeration Text="Zusätzliche Sicherheitsbedingung"  Value="2" Id="%ENID%" op:headerName="Sicherheit" />
+                </TypeRestriction>
+              </ParameterType>
             </ParameterTypes>
             <Parameters>
               <Parameter Id="%AID%_P-%TT%00002" Name="CheckForOneChannel" ParameterType="%AID%_PT-CheckBox" Text="" Value="1" Access="None" />

@@ -117,3 +117,4 @@ Freitext zur Wiedererkennung der Zone (z. B. "Rasenzone Vorgarten"). Wird auch a
 Normalerweise werden Zonen standardmäßig nacheinander bewässert. So kann der Druck und die Wassermenge gewährleistet werden.
 Hat man aber zwei oder mehrere kleinere Zonen (z.B. mehrere Beetzonen), so können über diese Einstellungen mehrer Zonen zusammen, d.h. gleichzeitig, bewässert werden.
 Die berechnete Zeitdauer der einzelnen Zonen wird dabei berücksichtigt. 
+

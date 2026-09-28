@@ -51,20 +51,20 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
     {
         case IRR_KoChNiederschlagsrate:
         {
-            Niederschlagsrate_Zone = KoIRR_ChNiederschlagsrate.value(DPT_Value_Temp);
+            _Niederschlagsrate_Zone = KoIRR_ChNiederschlagsrate.value(DPT_Value_Temp);
             logDebugP("processInputKo: Niederschlagsrate_Zone=%.2f", Niederschlagsrate_Zone);
             break;
         }
         case IRR_KoChSchwellwert:
         {
-            Schwellwert_P_Prozent_Zone = KoIRR_ChSchwellwert.value(DPT_Scaling);
-            logDebugP("processInputKo: Schwellwert_P_Prozent_Zone=%u", Schwellwert_P_Prozent_Zone);
+            _Schwellwert_P_Prozent_Zone = KoIRR_ChSchwellwert.value(DPT_Scaling);
+            logDebugP("processInputKo: Schwellwert_P_Prozent_Zone=%u", _Schwellwert_P_Prozent_Zone);
             break;
         }
         case IRR_KoChnFK: // Nutzbare Feldkapazität (nFK) [mm]    
         {
-            nutzbareFeldkapazitaet_nFK_Zone = KoIRR_ChnFK.value(DPT_Value_Temp);
-            logDebugP("processInputKo: nutzbareFeldkapazitaet_nFK_Zone=%.2f", nutzbareFeldkapazitaet_nFK_Zone);
+            _nutzbareFeldkapazitaet_nFK_Zone = KoIRR_ChnFK.value(DPT_Value_Temp);
+            logDebugP("processInputKo: nutzbareFeldkapazitaet_nFK_Zone=%.2f", _nutzbareFeldkapazitaet_nFK_Zone);
             break;
         }
         case IRR_KoChKc: // Kc-Faktor der Zone  
@@ -85,6 +85,13 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
             onStatusMagnetventilChanged(offen);
             break;
         }
+        case IRR_KoChBodenfeuchte:
+        {
+            _bodenfeuchteProzent = KoIRR_ChBodenfeuchte.value(DPT_Value_Temp);
+            _bodenfeuchteGueltig = true;
+            logDebugP("processInputKo: Bodenfeuchte=%.1f%%", _bodenfeuchteProzent);
+            break;
+        }
    
         default:
             logDebugP("default case processInputKo: unknown KO index %u", IRR_KoCalcIndex(iKo.asap()));
@@ -100,11 +107,11 @@ void IrrigationChannel::loop()
     if (_ZonenStatus == ZonenStatus::Laeuft)
     {
         uint32_t laufSek = (millis() - _kommandoStartMillis) / 1000;
-        if (laufSek >= ermittelteLaufzeit_sekunden)
+        if (laufSek >= _ermittelteLaufzeit_sekunden)
         {
             KoIRR_ChVentilansteuerung.value(false, DPT_Switch);
             _rueckmeldungStartMillis = millis();
-            _ZonenStatus = ZonenStatus::WartetAufRueckmeldung;
+            setZonenStatus(ZonenStatus::WartetAufRueckmeldung);
             logDebugP("Kanal %u: WartetAufRueckmeldung", _channelIndex);
         }
     }
@@ -116,7 +123,7 @@ void IrrigationChannel::loop()
         {
             //nocchmal zur Sicherheit abschalten 
             KoIRR_ChVentilansteuerung.value(false, DPT_Switch);
-            _ZonenStatus = ZonenStatus::TimeoutFehler;
+            setZonenStatus(ZonenStatus::TimeoutFehler);
             logDebugP( "Kanal %u: Timeout Ventil-Rueckmeldung", _channelIndex);
         }
     }
@@ -132,9 +139,9 @@ void IrrigationChannel::setup(bool configured)
         return;
     }
 
-    Niederschlagsrate_Zone = ParamIRR_CHNiederschlagsrateValue;
-    Schwellwert_P_Prozent_Zone = ParamIRR_CHSchwellwertValue;
-    nutzbareFeldkapazitaet_nFK_Zone = ParamIRR_CHnFKValue;
+    _Niederschlagsrate_Zone = ParamIRR_CHNiederschlagsrateValue;
+    _Schwellwert_P_Prozent_Zone = ParamIRR_CHSchwellwertValue;
+    _nutzbareFeldkapazitaet_nFK_Zone = ParamIRR_CHnFKValue;
     _Kulturfaktor_Kc_Zone = ParamIRR_CHKcValue / 100.0f;
     setKOInitialValues(); 
 }
@@ -155,14 +162,14 @@ void IrrigationChannel::setKOInitialValues(void)
 
 void IrrigationChannel::save()
 {
-    openknx.flash.writeFloat(Wasserbilanzkonto);
+    openknx.flash.writeFloat(_Wasserbilanzkonto);
     openknx.flash.writeByte(static_cast<uint8_t>(_ZonenStatus));
-    logDebugP("saved: Wasserbilanzkonto=%f Status=%u", Wasserbilanzkonto, static_cast<uint8_t>(_ZonenStatus));
+    logDebugP("saved: Wasserbilanzkonto=%f Status=%u", _Wasserbilanzkonto, static_cast<uint8_t>(_ZonenStatus));
 }
 
 void IrrigationChannel::restore()
 {
-    Wasserbilanzkonto = openknx.flash.readFloat();
+    _Wasserbilanzkonto = openknx.flash.readFloat();
     ZonenStatus restoredStatus = static_cast<ZonenStatus>(openknx.flash.readByte());
 
     if (restoredStatus == ZonenStatus::Laeuft || restoredStatus == ZonenStatus::WartetAufRueckmeldung)
@@ -170,16 +177,16 @@ void IrrigationChannel::restore()
         // Zustand mitten in einer laufenden Bewässerung ist nach einem Neustart
         // nicht mehr sicher zuzuordnen (kein gültiger Zeitstempel) - sicherheitshalber
         // zurücksetzen und Ventil explizit aus.
-        _ZonenStatus = ZonenStatus::Inaktiv;
+        setZonenStatus(ZonenStatus::Inaktiv);
         KoIRR_ChVentilansteuerung.value(false, DPT_Switch);
         logDebugP("restored: unterbrochene Bewaesserung erkannt, Status zurueckgesetzt, Ventil aus");
     }
     else
     {
-        _ZonenStatus = restoredStatus;
+        setZonenStatus(restoredStatus);
     }
 
-    logDebugP("restored: Wasserbilanzkonto=%f Status=%u", Wasserbilanzkonto, static_cast<uint8_t>(_ZonenStatus));
+    logDebugP("restored: Wasserbilanzkonto=%f Status=%u", _Wasserbilanzkonto, static_cast<uint8_t>(_ZonenStatus));
 }
 
 
@@ -192,38 +199,53 @@ void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern
 
     float ETc_gestern = calc_ETc(et0Gestern, _Kulturfaktor_Kc_Zone);
     
-    Wasserbilanzkonto = calc_Bodenwasserkonto(Wasserbilanzkonto, regenmengeGestern, ETc_gestern, nutzbareFeldkapazitaet_nFK_Zone);
-    Schwellwert_in_mm_Zone = calc_Schwellwert_in_mm((float)Schwellwert_P_Prozent_Zone, nutzbareFeldkapazitaet_nFK_Zone);
-    Bewaesserungsbedarf = calc_bedarf (Wasserbilanzkonto, Schwellwert_in_mm_Zone);
+    _Wasserbilanzkonto = calc_Bodenwasserkonto(_Wasserbilanzkonto, regenmengeGestern, ETc_gestern, _nutzbareFeldkapazitaet_nFK_Zone);
+    
+    // ---- Bodenfeuchtesensor, Modus 1: Konto korrigieren ----
+    if (_bodenfeuchteGueltig && ParamIRR_ChBodenfeuchteVerwendung == PT_BodenfeuchteVerwendung::Korrektur)
+    {
+        float gemessenesKonto = (_bodenfeuchteProzent / 100.0f) * _nutzbareFeldkapazitaet_nFK_Zone;
+        logDebugP("Kanal %u: Konto durch Bodenfeuchte korrigiert: %.2f -> %.2f", _channelIndex, _Wasserbilanzkonto, gemessenesKonto);
+        _Wasserbilanzkonto = gemessenesKonto;
+    }
+    
+    _Schwellwert_in_mm_Zone = calc_Schwellwert_in_mm((float)_Schwellwert_P_Prozent_Zone, _nutzbareFeldkapazitaet_nFK_Zone);
+    _Bewaesserungsbedarf = calc_bedarf (_Wasserbilanzkonto, _Schwellwert_in_mm_Zone);
 
     // sende das berechnete auf den Bus
-    KoIRR_ChWasserbilanzkonto.value(Wasserbilanzkonto, DPT_Value_Temp);
-    KoIRR_ChBedarf.value(Bewaesserungsbedarf, DPT_Switch);
+    KoIRR_ChWasserbilanzkonto.value(_Wasserbilanzkonto, DPT_Value_Temp);
+    KoIRR_ChBedarf.value(_Bewaesserungsbedarf, DPT_Switch);
 
-    Diagnose_Bewaesserung_gesperrt = _Sperre_Zone || Sperre_global;
+    // ---- Bodenfeuchtesensor, Modus 2: zusätzliche Sicherheitsbedingung ----
+    bool bodenfeuchteSperrtBewaesserung = false;
+    if (_bodenfeuchteGueltig && ParamIRR_ChBodenfeuchteVerwendung == PT_BodenfeuchteVerwendung::Sicherheit && _bodenfeuchteProzent >= (float)ParamIRR_ChSperrschwelleBodenfeuchte)
+    {
+        bodenfeuchteSperrtBewaesserung = true;
+        logDebugP("Kanal %u: Bewaesserung durch Bodenfeuchte gesperrt (%.1f%% >= %u%%)",
+                _channelIndex, _bodenfeuchteProzent, ParamIRR_ChSperrschwelleBodenfeuchte);
+    }
+
+    _Diagnose_Bewaesserung_gesperrt = _Sperre_Zone || Sperre_global || bodenfeuchteSperrtBewaesserung;
     
-    if (Bewaesserungsbedarf == true && Diagnose_Bewaesserung_gesperrt == false)
+    if (_Bewaesserungsbedarf == true && _Diagnose_Bewaesserung_gesperrt == false)
     {  
         //Fehlmenge und Laufzeit berechnen und für den
-        ermittelteFehlmenge_mm = calc_Fehlmenge_mm(nutzbareFeldkapazitaet_nFK_Zone, Wasserbilanzkonto);
-        ermittelteLaufzeit_sekunden = (uint16_t)calc_laufzeit_sek   (ermittelteFehlmenge_mm, Niederschlagsrate_Zone);
+        _ermittelteFehlmenge_mm = calc_Fehlmenge_mm(_nutzbareFeldkapazitaet_nFK_Zone, _Wasserbilanzkonto);
+        _ermittelteLaufzeit_sekunden = (uint16_t)calc_laufzeit_sek   (_ermittelteFehlmenge_mm, _Niederschlagsrate_Zone);
 
-                            // Bewässerungsstart vormerken ()
+        // Bewässerungsstart vormerken 
         // sende das berechnete auf den Bus
-        KoIRR_ChFehlmenge.value(ermittelteFehlmenge_mm, DPT_Value_Temp);
-        KoIRR_ChLaufzeit.value(ermittelteLaufzeit_sekunden, DPT_TimePeriodSec); 
-        _ZonenStatus = ZonenStatus::WartetAufStart;
+        KoIRR_ChFehlmenge.value(_ermittelteFehlmenge_mm, DPT_Value_Temp);
+        KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec); 
+        setZonenStatus(ZonenStatus::WartetAufStart);
     }
     else
     {
-        _ZonenStatus = ZonenStatus::Inaktiv;
+        setZonenStatus(ZonenStatus::Inaktiv);
         //nichts zu tun - nächster Vergleich wieder morgen
     }
-
-    logDebugP("Kanal %u: ETc_gestern=%.2f Wasserbilanzkonto=%.2f Schwellwert[mm]=%f", _channelIndex, ETc_gestern, Wasserbilanzkonto, Schwellwert_in_mm_Zone);
-    logDebugP("Bedarf = %i Fehlmenge[mm]=%f notw_Laufzeit[s]=%i", Bewaesserungsbedarf , ermittelteFehlmenge_mm, ermittelteLaufzeit_sekunden);
-
-   
+    logDebugP("Kanal %u: ETc_gestern=%.2f Wasserbilanzkonto=%.2f Schwellwert[mm]=%f", _channelIndex, ETc_gestern, _Wasserbilanzkonto, _Schwellwert_in_mm_Zone);
+    logDebugP("Bedarf = %i Fehlmenge[mm]=%f notw_Laufzeit[s]=%i", _Bewaesserungsbedarf , _ermittelteFehlmenge_mm, _ermittelteLaufzeit_sekunden);
 }
 
 
@@ -342,15 +364,15 @@ void IrrigationChannel::onStatusMagnetventilChanged(bool offen)
     if (_ZonenStatus != ZonenStatus::WartetAufRueckmeldung) return;
 
     uint32_t gemesseneLaufzeitSek = (millis() - _kommandoStartMillis) / 1000;
-    float zugefuehrteMm = calc_Zugefuehrte_Wassermenge((float)gemesseneLaufzeitSek, Niederschlagsrate_Zone);
-    Wasserbilanzkonto = calc_Bodenwasserkonto_final(Wasserbilanzkonto, zugefuehrteMm, nutzbareFeldkapazitaet_nFK_Zone);
+    float zugefuehrteMm = calc_Zugefuehrte_Wassermenge((float)gemesseneLaufzeitSek, _Niederschlagsrate_Zone);
+    _Wasserbilanzkonto = calc_Bodenwasserkonto_final(_Wasserbilanzkonto, zugefuehrteMm, _nutzbareFeldkapazitaet_nFK_Zone);
 
-    KoIRR_ChWasserbilanzkonto.value(Wasserbilanzkonto, DPT_Value_Temp);
-    Bewaesserungsbedarf = false;
-    KoIRR_ChBedarf.value(Bewaesserungsbedarf, DPT_Switch);
+    KoIRR_ChWasserbilanzkonto.value(_Wasserbilanzkonto, DPT_Value_Temp);
+    _Bewaesserungsbedarf = false;
+    KoIRR_ChBedarf.value(_Bewaesserungsbedarf, DPT_Switch);
 
-    _ZonenStatus = ZonenStatus::Abgeschlossen;
-    letzterBewaesserungsTag = getYearDay();
+    setZonenStatus(ZonenStatus::Abgeschlossen);
+    _letzterBewaesserungsTag = getYearDay();
     logDebugP("Kanal %u: Abgeschlossen, Konto final=%.2f", _channelIndex, Wasserbilanzkonto);
 }
 
@@ -370,8 +392,39 @@ void IrrigationChannel::starteBewaesserung()
 {
     if (_ZonenStatus != ZonenStatus::WartetAufStart) return; // Schutz vor Fehlaufrufen
 
-    _ZonenStatus = ZonenStatus::Laeuft;
+    setZonenStatus(ZonenStatus::Laeuft);
     _kommandoStartMillis = millis();
     KoIRR_ChVentilansteuerung.value(true, DPT_Switch);
     logDebugP("Kanal %u: Laeuft (geplante Laufzeit=%us)", _channelIndex, ermittelteLaufzeit_sekunden);
+}
+
+
+String IrrigationChannel::wandle_Zonenstatus_in_Text(ZonenStatus status)
+{
+    switch (status)
+    {
+        case ZonenStatus::Inaktiv:
+            return "Inaktiv";
+        case ZonenStatus::WartetAufStart:
+            return "WartetAufStart";
+        case ZonenStatus::Laeuft:
+            return "Laeuft";
+        case ZonenStatus::WartetAufRueckmeldung:
+            return "WartetAufRueckmeldung";
+        case ZonenStatus::Abgeschlossen:
+            return "Abgeschlossen";
+        case ZonenStatus::TimeoutFehler:
+            return "TimeoutFehler";
+        default:
+            return "Unbekannt";
+    }
+}
+
+void IrrigationChannel::setZonenStatus(ZonenStatus status)
+{
+    if (_ZonenStatus == status) return;
+
+    _ZonenStatus = status;
+    String statusText = wandle_Zonenstatus_in_Text(_ZonenStatus);
+    KoIRR_ChZonenStatus.value(statusText.c_str(), DPT_String_8859_1);
 }

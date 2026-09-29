@@ -191,7 +191,6 @@ void IrrigationModule::readFlash(const uint8_t* data, const uint16_t size)
     logIndentUp();
     if (size < flashSize()) // no channels present
     {
-        logDebugP("Flash data short!");
         logDebugP("Flash data short (have %u, need %u)!", size, flashSize());
         return;
     }

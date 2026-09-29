@@ -52,7 +52,7 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
         case IRR_KoChNiederschlagsrate:
         {
             _Niederschlagsrate_Zone = KoIRR_ChNiederschlagsrate.value(DPT_Value_Temp);
-            logDebugP("processInputKo: Niederschlagsrate_Zone=%.2f", Niederschlagsrate_Zone);
+            logDebugP("processInputKo: Niederschlagsrate_Zone=%.2f", _Niederschlagsrate_Zone);
             break;
         }
         case IRR_KoChSchwellwert:
@@ -373,7 +373,7 @@ void IrrigationChannel::onStatusMagnetventilChanged(bool offen)
 
     setZonenStatus(ZonenStatus::Abgeschlossen);
     _letzterBewaesserungsTag = getYearDay();
-    logDebugP("Kanal %u: Abgeschlossen, Konto final=%.2f", _channelIndex, Wasserbilanzkonto);
+    logDebugP("Kanal %u: Abgeschlossen, Konto final=%.2f", _channelIndex, _Wasserbilanzkonto);
 }
 
 bool IrrigationChannel::hatOffenenBedarf() const
@@ -395,7 +395,7 @@ void IrrigationChannel::starteBewaesserung()
     setZonenStatus(ZonenStatus::Laeuft);
     _kommandoStartMillis = millis();
     KoIRR_ChVentilansteuerung.value(true, DPT_Switch);
-    logDebugP("Kanal %u: Laeuft (geplante Laufzeit=%us)", _channelIndex, ermittelteLaufzeit_sekunden);
+    logDebugP("Kanal %u: Laeuft (geplante Laufzeit=%us)", _channelIndex, _ermittelteLaufzeit_sekunden);
 }
 
 

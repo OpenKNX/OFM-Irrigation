@@ -142,7 +142,7 @@ void IrrigationChannel::setup(bool configured)
     _Niederschlagsrate_Zone = ParamIRR_CHNiederschlagsrateValue;
     _Schwellwert_P_Prozent_Zone = ParamIRR_CHSchwellwertValue;
     _nutzbareFeldkapazitaet_nFK_Zone = ParamIRR_CHnFKValue;
-    _Kulturfaktor_Kc_Zone = ParamIRR_CHKcValue / 100.0f;
+    _Kulturfaktor_Kc_Zone = ParamIRR_CHKcValue / 10.0f;
     setKOInitialValues(); 
 }
 

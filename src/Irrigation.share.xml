@@ -170,12 +170,12 @@
                     <Row Id="%AID%_PB-nnn_R-5" />
                   </Rows>
                   <Columns>
-                    <Column Id="%AID%_PB-nnn_C-0" Width="45%" />
-                    <Column Id="%AID%_PB-nnn_C-1" Width="45%" />
-                    <Column Id="%AID%_PB-nnn_C-2" Width="45%" />
-                    <Column Id="%AID%_PB-nnn_C-3" Width="45%" />
-                    <Column Id="%AID%_PB-nnn_C-4" Width="45%" />
-                    <Column Id="%AID%_PB-nnn_C-5" Width="45%" />
+                    <Column Id="%AID%_PB-nnn_C-0" Width="25%" />
+                    <Column Id="%AID%_PB-nnn_C-1" Width="25%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="25%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Width="25%" />
+                    <Column Id="%AID%_PB-nnn_C-4" Width="25%" />
+                    <Column Id="%AID%_PB-nnn_C-5" Width="25%" />
                   </Columns>
 
                   <!-- dynamische Anzeige der Matrix, es werden nur die aktiven Kanäle angezeigt -->

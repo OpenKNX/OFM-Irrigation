@@ -11,7 +11,7 @@ IrrigationModule::IrrigationModule()
     for (uint8_t i = 0; i < IRR_ChannelCount; i++)
     {
         _channels[i] = new IrrigationChannel(i);  // nur Platzhalter, damit restore() schon funktioniert
-        logInfoP("Channel %d: new IrrigationChannel", i);
+        //logInfoP("Channel %d: new IrrigationChannel", i);
     }
 }
 

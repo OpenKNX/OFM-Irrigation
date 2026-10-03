@@ -11,7 +11,6 @@ IrrigationModule::IrrigationModule()
     for (uint8_t i = 0; i < IRR_ChannelCount; i++)
     {
         _channels[i] = new IrrigationChannel(i);  // nur Platzhalter, damit restore() schon funktioniert
-        //logInfoP("Channel %d: new IrrigationChannel", i);
     }
 }
 
@@ -42,24 +41,24 @@ void IrrigationModule::loop()
     else
     {
         uint16_t heute = getYearDay();
-        if (letzterBekannterTag == -1)
+        if (_letzterBekannterTag == -1)
         {
             // erster gültiger Aufruf nach Neustart - nur merken, NICHT als
             // Tageswechsel werten (sonst würde beim Boot sofort "gestern"
             // mit leeren Werten überschrieben)
-            letzterBekannterTag = heute;
+            _letzterBekannterTag = heute;
             return;
         }
-        else if (heute != letzterBekannterTag)
+        else if (heute != _letzterBekannterTag)
         {
             // plausi, letzerbekannter tag sollte heute -1 sein, bzw 366 zu 1
-            Tageswechsel_Werte_speichern((uint16_t)letzterBekannterTag);
-            calculateEt0(letzterBekannterTag);
-            letzterBekannterTag = heute;
+            Tageswechsel_Werte_speichern((uint16_t)_letzterBekannterTag);
+            calculateEt0(_letzterBekannterTag);
+            _letzterBekannterTag = heute;
             for (uint8_t i = 0; i < MIN(ParamIRR_VisibleChannels, IRR_ChannelCount); i++)
             {
                 if (_channels[i] == nullptr) continue;
-                _channels[i]->process_Bewaesserungsberechnung_channel(ET0_gestern, Regenmenge_gestern, _Sperre_Global);
+                _channels[i]->process_Bewaesserungsberechnung_channel(_ET0_gestern, _Regenmenge_gestern, _Sperre_Global);
             }
         } 
         pruefeUndStarteBewaesserungsfenster();
@@ -101,7 +100,11 @@ void IrrigationModule::processInputKo(GroupObject &iKo)
     }
     else if (iKo.asap() == IRR_KoRegenmenge_Wetterstation)  
     {
-        process_Regenmenge_Wetterstation(iKo.value(DPT_Rain_Amount));
+        // Datentyp laut ETS-Parameter: 0 = DPT 9.xxx (2 Byte), 1 = DPT 14.xxx (4 Byte)
+        if (ParamIRR_RegenmengeDpt == PT_RainDpt::Dpt14)
+            process_Regenmenge_Wetterstation((float)iKo.value(DPT_Value_Volume));
+        else
+            process_Regenmenge_Wetterstation(iKo.value(DPT_Rain_Amount));
     }
     else if  (iKo.asap() == IRR_KoGlobaleSperre)
     {
@@ -166,13 +169,13 @@ uint16_t IrrigationModule::flashSize()
     uint32_t currentYday = openknx.time.isValid() ? getYearDay() : 0;
 
     openknx.flash.writeInt(currentYday);
-    openknx.flash.writeFloat(Temperatur_max_heute);
-    openknx.flash.writeFloat(Temperatur_min_heute);
-    openknx.flash.writeByte(gueltigeWerte_heute ? 1 : 0);
-    openknx.flash.writeFloat(Temperatur_max_gestern);
-    openknx.flash.writeFloat(Temperatur_min_gestern);
-    openknx.flash.writeFloat(Temperatur_Durchschnitt_gestern);
-    openknx.flash.writeFloat(Regenmenge_gestern);
+    openknx.flash.writeFloat(_Temperatur_max_heute);
+    openknx.flash.writeFloat(_Temperatur_min_heute);
+    openknx.flash.writeByte(_gueltigeWerte_heute ? 1 : 0);
+    openknx.flash.writeFloat(_Temperatur_max_gestern);
+    openknx.flash.writeFloat(_Temperatur_min_gestern);
+    openknx.flash.writeFloat(_Temperatur_Durchschnitt_gestern);
+    openknx.flash.writeFloat(_Regenmenge_gestern);
 
 
     // jeder Kanal-Slot wird IMMER geschrieben, unabhängig von VisibleChannels ----
@@ -214,25 +217,25 @@ void IrrigationModule::readFlash(const uint8_t* data, const uint16_t size)
     uint16_t restoredcurrentYday = openknx.flash.readInt();
     float restoredTemperatur_max_heute = openknx.flash.readFloat();
     float restoredTemperatur_min_heute = openknx.flash.readFloat();
-    gueltigeWerte_heute = openknx.flash.readByte();  
-    Temperatur_max_gestern = openknx.flash.readFloat();
-    Temperatur_min_gestern = openknx.flash.readFloat();
-    Temperatur_Durchschnitt_gestern = openknx.flash.readFloat();
-    Regenmenge_gestern = openknx.flash.readFloat();
+    _gueltigeWerte_heute = openknx.flash.readByte();  
+    _Temperatur_max_gestern = openknx.flash.readFloat();
+    _Temperatur_min_gestern = openknx.flash.readFloat();
+    _Temperatur_Durchschnitt_gestern = openknx.flash.readFloat();
+    _Regenmenge_gestern = openknx.flash.readFloat();
 
     // heutige gespeicherte Werte nur übernehmen, wenn sie tatsächlich von HEUTE sind
     if (openknx.time.isValid() && (uint32_t)getYearDay() == restoredcurrentYday)
     {
-        Temperatur_max_heute = restoredTemperatur_max_heute;
-        Temperatur_min_heute = restoredTemperatur_min_heute;
-        gueltigeWerte_heute = true;
+        _Temperatur_max_heute = restoredTemperatur_max_heute;
+        _Temperatur_min_heute = restoredTemperatur_min_heute;
+        _gueltigeWerte_heute = true;
     }
     else
     {
         // Zeit noch nicht gültig ODER Tag hat sich seit dem letzten Speichern geändert. lieber frisch beginnen, stattveraltete/falsche Werte weiterzuschleppen.
-        Temperatur_max_heute = -42;
-        Temperatur_min_heute = 42;
-        gueltigeWerte_heute = false;
+        _Temperatur_max_heute = -42;
+        _Temperatur_min_heute = 42;
+        _gueltigeWerte_heute = false;
     }
 
 
@@ -248,31 +251,31 @@ void IrrigationModule::readFlash(const uint8_t* data, const uint16_t size)
 // ---- Tageswechsel: gestern einfrieren, ET0 rechnen, heute zurücksetzen --
 void IrrigationModule::Tageswechsel_Werte_speichern(uint16_t gestern)
 {
-    if (!gueltigeWerte_heute)
+    if (!_gueltigeWerte_heute)
     {
         SERIAL_DEBUG.println("Bewaesserung: Tageswechsel ohne Temperaturdaten - überspringe");
     }
     else
     {
-        Temperatur_max_gestern = Temperatur_max_heute;
-        Temperatur_min_gestern = Temperatur_min_heute;
-        Temperatur_Durchschnitt_gestern = Temperatur_Durchschnitt_heute;
+        _Temperatur_max_gestern = _Temperatur_max_heute;
+        _Temperatur_min_gestern = _Temperatur_min_heute;
+        _Temperatur_Durchschnitt_gestern = _Temperatur_Durchschnitt_heute;
     }
-    Regenmenge_gestern = letzteRegenmengeHeute;
+    _Regenmenge_gestern = _letzteRegenmengeHeute;
 
 
     // "heute" zurücksetzen
-    Temperatur_max_heute = letzteEmpfangeneTemperatur;
-    Temperatur_min_heute = letzteEmpfangeneTemperatur;
-    Temperatur_Durchschnitt_heute = letzteEmpfangeneTemperatur;
-    gueltigeWerte_heute = false;
+    _Temperatur_max_heute = _letzteEmpfangeneTemperatur;
+    _Temperatur_min_heute = _letzteEmpfangeneTemperatur;
+    _Temperatur_Durchschnitt_heute = _letzteEmpfangeneTemperatur;
+    _gueltigeWerte_heute = false;
 
-    letzteRegenmengeHeute = 0.0f; // Annahme: Regenmesser resettet ebenfalls täglich
+    _letzteRegenmengeHeute = 0.0f; // Annahme: Regenmesser resettet ebenfalls täglich
 
     // min max Durchschnitswerte heute senden
-    KoIRR_TDurchschnittGestern.value(Temperatur_Durchschnitt_gestern, DPT_Value_Temp);
-    KoIRR_TMaxGestern.value(Temperatur_max_gestern, DPT_Value_Temp);
-    KoIRR_TMinGestern.value(Temperatur_min_gestern, DPT_Value_Temp);
+    KoIRR_TDurchschnittGestern.value(_Temperatur_Durchschnitt_gestern, DPT_Value_Temp);
+    KoIRR_TMaxGestern.value(_Temperatur_max_gestern, DPT_Value_Temp);
+    KoIRR_TMinGestern.value(_Temperatur_min_gestern, DPT_Value_Temp);
 }
 
 uint16_t IrrigationModule::getYearDay(void)
@@ -291,19 +294,19 @@ uint16_t IrrigationModule::getYearDay(void)
 
 void IrrigationModule::calculateEt0(uint16_t TagdesJahres)
 {
-    if (!gueltigeWerte_heute) 
+    if (!_gueltigeWerte_heute) 
     { 
-        ET0_gestern = 0.0f; 
+        _ET0_gestern = 0.0f; 
         logDebugP("calculateEt0: keine gültigen Temperaturwerte für gestern, ET0_gestern=0.0");
     }
     else
     {
         RaResult RaErgebnis;
         RaErgebnis = calc_Ra(TagdesJahres);
-        ET0_gestern = calc_ET0(Temperatur_Durchschnitt_gestern, Temperatur_max_gestern, Temperatur_min_gestern, RaErgebnis.ra_mm);
+        _ET0_gestern = calc_ET0(_Temperatur_Durchschnitt_gestern, _Temperatur_max_gestern, _Temperatur_min_gestern, RaErgebnis.ra_mm);
     }  
     // ---- KO-Ausgabe ----
-     KoIRR_Berechnung_ET0.value(ET0_gestern, DPT_Value_Temp);
+     KoIRR_Berechnung_ET0.value(_ET0_gestern, DPT_Value_Temp);
 }
 
 
@@ -385,28 +388,28 @@ void IrrigationModule::process_Temperatur_Wetterstation (float aktuelleTemperatu
         logDebugP("Temperaturwert außerhalb Plausibereich verworfen: %f", aktuelleTemperatur);
         return;
     }
-    letzteEmpfangeneTemperatur = aktuelleTemperatur;
+    _letzteEmpfangeneTemperatur = aktuelleTemperatur;
 
-    if (!gueltigeWerte_heute)
+    if (!_gueltigeWerte_heute)
     {
-        Temperatur_max_heute = aktuelleTemperatur;
-        Temperatur_min_heute = aktuelleTemperatur;
-        Temperatur_Durchschnitt_heute = aktuelleTemperatur;
-        gueltigeWerte_heute = true;
+        _Temperatur_max_heute = aktuelleTemperatur;
+        _Temperatur_min_heute = aktuelleTemperatur;
+        _Temperatur_Durchschnitt_heute = aktuelleTemperatur;
+        _gueltigeWerte_heute = true;
     }
     else
     {
-        if (aktuelleTemperatur > Temperatur_max_heute) Temperatur_max_heute = aktuelleTemperatur;
-        if (aktuelleTemperatur < Temperatur_min_heute) Temperatur_min_heute = aktuelleTemperatur;
+        if (aktuelleTemperatur > _Temperatur_max_heute) _Temperatur_max_heute = aktuelleTemperatur;
+        if (aktuelleTemperatur < _Temperatur_min_heute) _Temperatur_min_heute = aktuelleTemperatur;
     }
 
     // Mittelwert bilden.
-    Temperatur_Durchschnitt_heute = (aktuelleTemperatur + Temperatur_Durchschnitt_heute) / 2;
+    _Temperatur_Durchschnitt_heute = (_Temperatur_max_heute + _Temperatur_min_heute) / 2;
 
     // min max Durchschnitswerte heute senden
-    KoIRR_TDurchschnittHeute.value(Temperatur_Durchschnitt_heute, DPT_Value_Temp);
-    KoIRR_TMaxHeute.value(Temperatur_max_heute, DPT_Value_Temp);
-    KoIRR_TMinHeute.value(Temperatur_min_heute, DPT_Value_Temp);
+    KoIRR_TDurchschnittHeute.value(_Temperatur_Durchschnitt_heute, DPT_Value_Temp);
+    KoIRR_TMaxHeute.value(_Temperatur_max_heute, DPT_Value_Temp);
+    KoIRR_TMinHeute.value(_Temperatur_min_heute, DPT_Value_Temp);
 }
 
 void IrrigationModule::process_Regenmenge_Wetterstation (float regenmengeHeuteMm)
@@ -416,7 +419,7 @@ void IrrigationModule::process_Regenmenge_Wetterstation (float regenmengeHeuteMm
         logDebugP("Regenmenge negativ verworfen: %f ", regenmengeHeuteMm);
         return;
     }
-    letzteRegenmengeHeute = regenmengeHeuteMm;
+    _letzteRegenmengeHeute = regenmengeHeuteMm;
 }
 
 

@@ -21,6 +21,12 @@
                   <Enumeration Text="Funktionslos" Value="2" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
+              <ParameterType Id="%AID%_PT-IRRRainDpt" Name="RainDpt" op:headerExport="enum" op:headerName="RainDpt">
+                <TypeRestriction Base="Value" SizeInBit="4">
+                  <Enumeration Text="DPT 9.xxx (2-Byte-Gleitkomma)" Value="0" Id="%ENID%" op:headerName="Dpt9" />
+                  <Enumeration Text="DPT 14.xxx (4-Byte-Gleitkomma)" Value="1" Id="%ENID%" op:headerName="Dpt14" />
+                </TypeRestriction>
+              </ParameterType>
               <ParameterType Id="%AID%_PT-IRRYesNo" Name="IRRYesNo">
                 <TypeRestriction Base="Value" SizeInBit="1">
                   <Enumeration Text="Nein" Value="0" Id="%ENID%" />
@@ -80,10 +86,11 @@
                 <Parameter Id="%AID%_UP-%TT%00043" Name="KompatibelZone4Zone6" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 4 + Zone 6" Offset="0" BitOffset="5" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%00044" Name="KompatibelZone5Zone6" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 5 + Zone 6" Offset="0" BitOffset="6" Value="0" />
               </Union>
-              <Union SizeInBit="16">
+              <Union SizeInBit="24">
                 <Memory CodeSegment="%AID%_RS-04-00004" Offset="0" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00020" Name="BewaesserungsstartStunde" ParameterType="%AID%_PT-IRRStunde" Text="Bewässerungsfenster: Startstunde" Offset="0" BitOffset="0" Value="4" />
                 <Parameter Id="%AID%_UP-%TT%00021" Name="BewaesserungsstartMinute" ParameterType="%AID%_PT-IRRMinute" Text="Bewässerungsfenster: Startminute" Offset="1" BitOffset="0" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00022" Name="RegenmengeDpt" ParameterType="%AID%_PT-IRRRainDpt" Text="Datentyp Regenmenge" Offset="2" BitOffset="0" Value="1" />
               </Union>
             </Parameters>
             <ParameterRefs>
@@ -91,6 +98,7 @@
               <ParameterRef Id="%AID%_P-%TT%00002_R-%TT%0000201" RefId="%AID%_P-%TT%00002" /> <!-- CheckForOneChannel -->
               <ParameterRef Id="%AID%_UP-%TT%00020_R-%TT%0002001" RefId="%AID%_UP-%TT%00020" />
               <ParameterRef Id="%AID%_UP-%TT%00021_R-%TT%0002101" RefId="%AID%_UP-%TT%00021" />
+              <ParameterRef Id="%AID%_UP-%TT%00022_R-%TT%0002201" RefId="%AID%_UP-%TT%00022" />
               <ParameterRef Id="%AID%_UP-%TT%00030_R-%TT%0003001" RefId="%AID%_UP-%TT%00030" />
               <ParameterRef Id="%AID%_UP-%TT%00031_R-%TT%0003101" RefId="%AID%_UP-%TT%00031" />
               <ParameterRef Id="%AID%_UP-%TT%00032_R-%TT%0003201" RefId="%AID%_UP-%TT%00032" />
@@ -110,7 +118,7 @@
             <ComObjectTable>
               <ComObject Id="%AID%_O-%TT%00100" Name="Berechnung_ET0"            FunctionText="Global Ausgang"  Text="Berechnung ET0 [mm/Tag]"         Number="1000" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
               <ComObject Id="%AID%_O-%TT%00101" Name="Temperatur_Wetterstation"     FunctionText="Global Eingang:" Text="Aktuelle Temperatur"             Number="1001" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
-              <ComObject Id="%AID%_O-%TT%00102" Name="Regenmenge_Wetterstation"     FunctionText="Global Eingang:" Text="Regenmenge heute"                Number="1002" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
+              <ComObject Id="%AID%_O-%TT%00102" Name="Regenmenge_Wetterstation"     FunctionText="Global Eingang:" Text="Regenmenge heute"                Number="1002" ObjectSize="4 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-14-0" />
               <ComObject Id="%AID%_O-%TT%00103" Name="GlobaleSperre" FunctionText="Global Eingang:" Text="Globale Sperre Bewässerung"   Number="1003" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-2" />
               <ComObject Id="%AID%_O-%TT%00104" Name="TDurchschnittHeute" FunctionText="Global Ausgang:" Text="Berechnung Durchschnittstemperatur heute"    Number="1004" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%00105" Name="TDurchschnittGestern" FunctionText="Global Ausgang:" Text="Berechnung Durchschnittstemperatur gestern" Number="1005" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
@@ -123,7 +131,8 @@
             <ComObjectRefs>
               <ComObjectRef Id="%AID%_O-%TT%00100_R-%TT%0010001" RefId="%AID%_O-%TT%00100" />              <!-- ET0 -->
               <ComObjectRef Id="%AID%_O-%TT%00101_R-%TT%0010101" RefId="%AID%_O-%TT%00101" />              <!-- Temperatur -->
-              <ComObjectRef Id="%AID%_O-%TT%00102_R-%TT%0010201" RefId="%AID%_O-%TT%00102" />              <!-- Regenmenge -->
+              <ComObjectRef Id="%AID%_O-%TT%00102_R-%TT%0010201" RefId="%AID%_O-%TT%00102" ObjectSize="2 Bytes" DatapointType="DPST-9-26" /> <!-- Regenmenge DPT9 -->
+              <ComObjectRef Id="%AID%_O-%TT%00102_R-%TT%0010202" RefId="%AID%_O-%TT%00102" ObjectSize="4 Bytes" DatapointType="DPST-14-0" /> <!-- Regenmenge DPT14 -->
               <ComObjectRef Id="%AID%_O-%TT%00103_R-%TT%0010301" RefId="%AID%_O-%TT%00103" />              <!-- GlobaleSperre -->
               <ComObjectRef Id="%AID%_O-%TT%00104_R-%TT%0010401" RefId="%AID%_O-%TT%00104" />              <!-- TDurchschnittHeute -->
               <ComObjectRef Id="%AID%_O-%TT%00105_R-%TT%0010501" RefId="%AID%_O-%TT%00105" />              <!-- TDurchschnittGestern -->
@@ -153,9 +162,19 @@
                   </when>
                 </choose>
 
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Zeitfenster" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00020_R-%TT%0002001" HelpContext="Empty" IndentLevel="1" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00021_R-%TT%0002101" HelpContext="Empty" IndentLevel="1" />
+                
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Wetterdaten" UIHint="Headline" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00022_R-%TT%0002201" HelpContext="IRR-Regenmenge-heute" IndentLevel="1" />
+                <choose ParamRefId="%AID%_UP-%TT%00022_R-%TT%0002201"> 
+                  <when test="0"><ComObjectRefRef RefId="%AID%_O-%TT%00102_R-%TT%0010201" /></when> <!--DPT9-->
+                  <when test="1"><ComObjectRefRef RefId="%AID%_O-%TT%00102_R-%TT%0010202" /></when> <!--DPT14-->
+                </choose>
+    
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Gleichzeitig zulässige Zonen-Kombinationen" UIHint="Headline" />
@@ -271,7 +290,6 @@
                           <!-- globale KOs -->
               <ComObjectRefRef RefId="%AID%_O-%TT%00100_R-%TT%0010001" />              <!-- ET0 -->
               <ComObjectRefRef RefId="%AID%_O-%TT%00101_R-%TT%0010101" />              <!-- Temperatur -->
-              <ComObjectRefRef RefId="%AID%_O-%TT%00102_R-%TT%0010201" />              <!-- Regenmenge -->
               <ComObjectRefRef RefId="%AID%_O-%TT%00103_R-%TT%0010301" />              <!-- GlobaleSperre -->
               <ComObjectRefRef RefId="%AID%_O-%TT%00104_R-%TT%0010401" />              <!-- TDurchschnittHeute -->
               <ComObjectRefRef RefId="%AID%_O-%TT%00105_R-%TT%0010501" />              <!-- TDurchschnittGestern -->

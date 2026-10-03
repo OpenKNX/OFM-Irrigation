@@ -37,11 +37,11 @@ class IrrigationModule : public OpenKNX::Module
     uint8_t _numChannels = 0;
     bool _Sperre_Global = true;
 
-    float ET0_gestern;
+    float _ET0_gestern;
 
-    float letzteEmpfangeneTemperatur = 0;
-    float letzteRegenmengeHeute = 0.0f;
-    int16_t letzterBekannterTag = -1; // -1 = "noch nie gesehen"
+    float _letzteEmpfangeneTemperatur = 0;
+    float _letzteRegenmengeHeute = 0.0f;
+    int16_t _letzterBekannterTag = -1; // -1 = "noch nie gesehen"
   
 
     
@@ -56,16 +56,16 @@ class IrrigationModule : public OpenKNX::Module
     }; 
 
         // heutige Werte
-    float Temperatur_max_heute = -42.0;
-    float Temperatur_min_heute = 42.0;
-    float Temperatur_Durchschnitt_heute = -42.0;
-    bool gueltigeWerte_heute = false;
+    float _Temperatur_max_heute = -42.0;
+    float _Temperatur_min_heute = 42.0;
+    float _Temperatur_Durchschnitt_heute = -42.0;
+    bool _gueltigeWerte_heute = false;
 
     // Gestrige Werte
-    float Temperatur_max_gestern = -42.0;
-    float Temperatur_min_gestern = 42.0;
-    float Temperatur_Durchschnitt_gestern = -42.0;
-    float Regenmenge_gestern = 0.0f;
+    float _Temperatur_max_gestern = -42.0;
+    float _Temperatur_min_gestern = 42.0;
+    float _Temperatur_Durchschnitt_gestern = -42.0;
+    float _Regenmenge_gestern = 0.0f;
 
 
     bool _zeitfensterAktiv = false;

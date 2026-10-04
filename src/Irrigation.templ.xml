@@ -68,7 +68,7 @@
               <ParameterRef Id="%AID%_UP-%TT%%CC%008_R-%TT%%CC%00801" RefId="%AID%_UP-%TT%%CC%008" /> <!-- nFKValue via KO -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%009_R-%TT%%CC%00901" RefId="%AID%_UP-%TT%%CC%009" SuffixText="mm" /> <!-- nFKValue -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001" RefId="%AID%_UP-%TT%%CC%010" /> <!-- KcValue via KO  -->
-              <ParameterRef Id="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_UP-%TT%%CC%011" SuffixText="Faktor 10" /> <!-- KcValue -->
+              <ParameterRef Id="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_UP-%TT%%CC%011" SuffixText="/ 10" /> <!-- KcValue -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%012_R-%TT%%CC%01201" RefId="%AID%_UP-%TT%%CC%012" /> <!-- BodenfeuchteVerwendung -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%013_R-%TT%%CC%01301" RefId="%AID%_UP-%TT%%CC%013" SuffixText="%" /> <!-- Sperrschwelle Bodenfeuchte -->
             </ParameterRefs>
@@ -171,7 +171,7 @@
                         </choose>
 
                         <ParameterRefRef RefId="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" IndentLevel="1" HelpContext="%DOC%" />
-                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Hier mit Faktor 10 eingeben - 80 entspricht dann 0,8" /> 
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Hier mit / 10 eingeben - 80 entspricht dann 0,8" /> 
                         <ParameterRefRef RefId="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001" IndentLevel="1" />
                         <choose ParamRefId="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001">
                           <when test="=1">
@@ -180,7 +180,7 @@
                         </choose>
 
                         <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
-                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Bodenfeuchtesensor benutzen" UIHint="Headline" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Bodenfeuchtesensor" UIHint="Headline" />
                         <ParameterRefRef RefId="%AID%_UP-%TT%%CC%012_R-%TT%%CC%01201" IndentLevel="1" />
                         <choose ParamRefId="%AID%_UP-%TT%%CC%012_R-%TT%%CC%01201"> <!-- Ch%C%BodenfeuchteVerwendung -->
                           <when test="0"> <!-- Nicht verwendet -->

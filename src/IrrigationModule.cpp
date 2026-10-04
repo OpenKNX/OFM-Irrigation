@@ -70,17 +70,15 @@ void IrrigationModule::loop()
     }
 }
 
-void IrrigationModule::setup(bool configured)
+void IrrigationModule::setup() 
 {
     logInfoP("setup() START");
-    
-    // Number of available channels is the minimum of configured and available channels
     _numChannels = MIN(ParamIRR_VisibleChannels, IRR_ChannelCount);
     logInfoP("_numChannels=%d", _numChannels);
     for (uint8_t i = 0; i < _numChannels; i++)
     {
         logInfoP("Channel %d: Setup IrrigationChannel", i);
-        _channels[i]->setup(configured);   
+        _channels[i]->setup();   
     }
     logInfoP("setup() DONE");
 }
@@ -253,7 +251,7 @@ void IrrigationModule::Tageswechsel_Werte_speichern(uint16_t gestern)
 {
     if (!_gueltigeWerte_heute)
     {
-        SERIAL_DEBUG.println("Bewaesserung: Tageswechsel ohne Temperaturdaten - überspringe");
+        logDebugP("Tageswechsel ohne Temperaturdaten - überspringe");
     }
     else
     {

@@ -67,7 +67,7 @@ private:
     ~IrrigationChannel();
 
     const std::string name() override;
-    void setup(bool configured) override;
+    void setup() override;
     void loop() override;
     void processInputKo(GroupObject &ko) override;
     void process_Bewaesserungsberechnung_channel(float et0Gestern, float regenmengeGestern, bool Freigabe_global);

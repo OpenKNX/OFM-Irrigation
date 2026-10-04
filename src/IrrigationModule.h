@@ -19,7 +19,7 @@ class IrrigationModule : public OpenKNX::Module
     bool processCommand(const std::string command, bool diagnose) override;
     bool debug();
     void loop() override;
-    void setup(bool configured) override;
+    void setup() override;
     const std::string name() override;
     const std::string version() override;
     

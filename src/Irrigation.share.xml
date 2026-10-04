@@ -61,36 +61,31 @@
             </ParameterTypes>
             <Parameters>
               <Parameter Id="%AID%_P-%TT%00002" Name="CheckForOneChannel" ParameterType="%AID%_PT-CheckBox" Text="" Value="1" Access="None" />
-              <Union SizeInBit="8">
-                <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
+              <Union SizeInBit="8"> <Memory CodeSegment="%MID%" Offset="0" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00001" Name="VisibleChannels" ParameterType="%AID%_PT-IRRNumChannels" Offset="0" BitOffset="0" Text="Verfügbare Kanäle" Value="%IRR_NumChannelsDefault%" SuffixText=" von %N%" />
               </Union>
-              <Union SizeInBit="8">
-                <Memory CodeSegment="%AID%_RS-04-00002" Offset="0" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%00030" Name="KompatibelZone1Zone2" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 1 + Zone 2" Offset="0" BitOffset="0" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00031" Name="KompatibelZone1Zone3" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 1 + Zone 3" Offset="0" BitOffset="1" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00032" Name="KompatibelZone1Zone4" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 1 + Zone 4" Offset="0" BitOffset="2" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00033" Name="KompatibelZone1Zone5" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 1 + Zone 5" Offset="0" BitOffset="3" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00034" Name="KompatibelZone1Zone6" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 1 + Zone 6" Offset="0" BitOffset="4" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00035" Name="KompatibelZone2Zone3" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 2 + Zone 3" Offset="0" BitOffset="5" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00036" Name="KompatibelZone2Zone4" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 2 + Zone 4" Offset="0" BitOffset="6" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00037" Name="KompatibelZone2Zone5" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 2 + Zone 5" Offset="0" BitOffset="7" Value="0" />
+              <Union SizeInBit="16"> <Memory CodeSegment="%MID%" Offset="1" BitOffset="0" />
+
+                <Parameter Id="%AID%_UP-%TT%00030" Name="KompatibelZone1Zone2" ParameterType="%AID%_PT-CheckBox" Text="Zone 1 + Zone 2" Offset="0" BitOffset="0" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00031" Name="KompatibelZone1Zone3" ParameterType="%AID%_PT-CheckBox" Text="Zone 1 + Zone 3" Offset="0" BitOffset="1" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00032" Name="KompatibelZone1Zone4" ParameterType="%AID%_PT-CheckBox" Text="Zone 1 + Zone 4" Offset="0" BitOffset="2" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00033" Name="KompatibelZone1Zone5" ParameterType="%AID%_PT-CheckBox" Text="Zone 1 + Zone 5" Offset="0" BitOffset="3" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00034" Name="KompatibelZone1Zone6" ParameterType="%AID%_PT-CheckBox" Text="Zone 1 + Zone 6" Offset="0" BitOffset="4" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00035" Name="KompatibelZone2Zone3" ParameterType="%AID%_PT-CheckBox" Text="Zone 2 + Zone 3" Offset="0" BitOffset="5" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00036" Name="KompatibelZone2Zone4" ParameterType="%AID%_PT-CheckBox" Text="Zone 2 + Zone 4" Offset="0" BitOffset="6" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00037" Name="KompatibelZone2Zone5" ParameterType="%AID%_PT-CheckBox" Text="Zone 2 + Zone 5" Offset="0" BitOffset="7" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00038" Name="KompatibelZone2Zone6" ParameterType="%AID%_PT-CheckBox" Text="Zone 2 + Zone 6" Offset="1" BitOffset="0" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00039" Name="KompatibelZone3Zone4" ParameterType="%AID%_PT-CheckBox" Text="Zone 3 + Zone 4" Offset="1" BitOffset="1" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00040" Name="KompatibelZone3Zone5" ParameterType="%AID%_PT-CheckBox" Text="Zone 3 + Zone 5" Offset="1" BitOffset="2" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00041" Name="KompatibelZone3Zone6" ParameterType="%AID%_PT-CheckBox" Text="Zone 3 + Zone 6" Offset="1" BitOffset="3" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00042" Name="KompatibelZone4Zone5" ParameterType="%AID%_PT-CheckBox" Text="Zone 4 + Zone 5" Offset="1" BitOffset="4" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00043" Name="KompatibelZone4Zone6" ParameterType="%AID%_PT-CheckBox" Text="Zone 4 + Zone 6" Offset="1" BitOffset="5" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00044" Name="KompatibelZone5Zone6" ParameterType="%AID%_PT-CheckBox" Text="Zone 5 + Zone 6" Offset="1" BitOffset="6" Value="0" />
               </Union>
-              <Union SizeInBit="8">
-                <Memory CodeSegment="%AID%_RS-04-00003" Offset="0" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%00038" Name="KompatibelZone2Zone6" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 2 + Zone 6" Offset="0" BitOffset="0" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00039" Name="KompatibelZone3Zone4" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 3 + Zone 4" Offset="0" BitOffset="1" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00040" Name="KompatibelZone3Zone5" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 3 + Zone 5" Offset="0" BitOffset="2" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00041" Name="KompatibelZone3Zone6" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 3 + Zone 6" Offset="0" BitOffset="3" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00042" Name="KompatibelZone4Zone5" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 4 + Zone 5" Offset="0" BitOffset="4" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00043" Name="KompatibelZone4Zone6" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 4 + Zone 6" Offset="0" BitOffset="5" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00044" Name="KompatibelZone5Zone6" ParameterType="%AID%_PT-OnOffYesNo" Text="Zone 5 + Zone 6" Offset="0" BitOffset="6" Value="0" />
-              </Union>
-              <Union SizeInBit="24">
-                <Memory CodeSegment="%AID%_RS-04-00004" Offset="0" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%00020" Name="BewaesserungsstartStunde" ParameterType="%AID%_PT-IRRStunde" Text="Bewässerungsfenster: Startstunde" Offset="0" BitOffset="0" Value="4" />
-                <Parameter Id="%AID%_UP-%TT%00021" Name="BewaesserungsstartMinute" ParameterType="%AID%_PT-IRRMinute" Text="Bewässerungsfenster: Startminute" Offset="1" BitOffset="0" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00022" Name="RegenmengeDpt" ParameterType="%AID%_PT-IRRRainDpt" Text="Datentyp Regenmenge" Offset="2" BitOffset="0" Value="1" />
+              <Union SizeInBit="24"> <Memory CodeSegment="%MID%" Offset="3" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00020" Name="BewaesserungsstartStunde" ParameterType="%AID%_PT-IRRStunde" Text="Bewässerungsfenster: Startstunde" Offset="0" BitOffset="0" Value="4" /> 
+                <Parameter Id="%AID%_UP-%TT%00021" Name="BewaesserungsstartMinute" ParameterType="%AID%_PT-IRRMinute" Text="Bewässerungsfenster: Startminute" Offset="1" BitOffset="0" Value="0" /> 
+                <Parameter Id="%AID%_UP-%TT%00022" Name="RegenmengeDpt" ParameterType="%AID%_PT-IRRRainDpt" Text="Datentyp Regenmenge" Offset="2" BitOffset="0" Value="1" />  
               </Union>
             </Parameters>
             <ParameterRefs>

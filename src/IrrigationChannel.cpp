@@ -39,14 +39,8 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
     }
 
     logIndentUp();
-    if (openknxIrrigationModule.debug())
-    {
-        logDebugP("[channel]processInputKo: channel %u", _channelIndex);
-        
-    }   
-
-    //logDebugP("IRR_KoCalcIndex %i", IRR_KoCalcIndex(iKo.asap()));
-
+    logDebugP("[channel]processInputKo: channel %u", _channelIndex);
+  
     switch (IRR_KoCalcIndex(iKo.asap()))
     {
         case IRR_KoChNiederschlagsrate:
@@ -130,9 +124,9 @@ void IrrigationChannel::loop()
 
 }
 
-void IrrigationChannel::setup(bool configured)
+void IrrigationChannel::setup() 
 {
-    _channelActive = configured && (ParamIRR_ChActive == 1);
+    _channelActive = (ParamIRR_ChActive == 1);
     if (!_channelActive) 
     {
         logDebugP("Channel %u: not active!", _channelIndex);

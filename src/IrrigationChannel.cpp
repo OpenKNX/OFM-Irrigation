@@ -222,21 +222,34 @@ void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern
     _Diagnose_Bewaesserung_gesperrt = _Sperre_Zone || Sperre_global || bodenfeuchteSperrtBewaesserung;
     
     if (_Bewaesserungsbedarf == true && _Diagnose_Bewaesserung_gesperrt == false)
-    {  
-        //Fehlmenge und Laufzeit berechnen und für den
+    {
         _ermittelteFehlmenge_mm = calc_Fehlmenge_mm(_nutzbareFeldkapazitaet_nFK_Zone, _Wasserbilanzkonto);
-        _ermittelteLaufzeit_sekunden = (uint16_t)calc_laufzeit_sek   (_ermittelteFehlmenge_mm, _Niederschlagsrate_Zone);
+        _ermittelteLaufzeit_sekunden = calc_laufzeit_sek(_ermittelteFehlmenge_mm, _Niederschlagsrate_Zone);
 
-        // Bewässerungsstart vormerken 
-        // sende das berechnete auf den Bus
-        KoIRR_ChFehlmenge.value(_ermittelteFehlmenge_mm, DPT_Value_Temp);
-        KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec); 
-        setZonenStatus(ZonenStatus::WartetAufStart);
+        if (_ermittelteLaufzeit_sekunden == 0)
+        {
+            // Bedarf vorhanden, aber nicht bewaesserbar (z. B. Niederschlagsrate <= 0 oder Fehlmenge minimal)
+            if (_Niederschlagsrate_Zone <= 0.0f)
+                logErrorP("Kanal %u: Niederschlagsrate <= 0, Laufzeit nicht berechenbar - Zone wird uebersprungen", _channelIndex);
+            else
+                logDebugP("Kanal %u: Laufzeit = 0s (Fehlmenge=%.3f mm) - Zone wird uebersprungen", _channelIndex, _ermittelteFehlmenge_mm);
+
+            KoIRR_ChFehlmenge.value(_ermittelteFehlmenge_mm, DPT_Value_Temp);
+            KoIRR_ChLaufzeit.value((uint16_t)0, DPT_TimePeriodSec);
+            setZonenStatus(ZonenStatus::Inaktiv);
+        }
+        else
+        {
+            // Bewaesserungsstart vormerken und Werte auf den Bus senden
+            KoIRR_ChFehlmenge.value(_ermittelteFehlmenge_mm, DPT_Value_Temp);
+            KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec);
+            setZonenStatus(ZonenStatus::WartetAufStart);
+        }
     }
     else
     {
         setZonenStatus(ZonenStatus::Inaktiv);
-        //nichts zu tun - nächster Vergleich wieder morgen
+        // nichts zu tun - naechster Vergleich wieder morgen
     }
     logDebugP("Kanal %u: ETc_gestern=%.2f Wasserbilanzkonto=%.2f Schwellwert[mm]=%f", _channelIndex, ETc_gestern, _Wasserbilanzkonto, _Schwellwert_in_mm_Zone);
     logDebugP("Bedarf = %i Fehlmenge[mm]=%f notw_Laufzeit[s]=%i", _Bewaesserungsbedarf , _ermittelteFehlmenge_mm, _ermittelteLaufzeit_sekunden);
@@ -306,7 +319,7 @@ float IrrigationChannel::calc_Fehlmenge_mm ( float nutzbareFeldkapazitaet, float
 // ============================================================
 // 9. Bewässerungs-Laufzeit
 // ============================================================
-
+static constexpr uint32_t MIN_LAUFZEIT_S = 60;
 uint16_t IrrigationChannel::calc_laufzeit_sek(float fehlmenge_mm, float niederschlagsrate_mm_h)
 {
     if (niederschlagsrate_mm_h <= 0.0f)
@@ -315,7 +328,7 @@ uint16_t IrrigationChannel::calc_laufzeit_sek(float fehlmenge_mm, float niedersc
     }
 
     float laufzeitSek = (fehlmenge_mm / niederschlagsrate_mm_h) * 3600.0f;
-    if (laufzeitSek < 0.0f)
+    if (laufzeitSek < MIN_LAUFZEIT_S) // berechenete Laufzeiten unter 60s werden nicht ausgeführt, da die Ventile/Pumpen sonst zu oft geschaltet werden.
     {
         return 0;
     }
@@ -382,9 +395,25 @@ bool IrrigationChannel::laeuftGerade() const
     return _ZonenStatus == ZonenStatus::Laeuft || _ZonenStatus == ZonenStatus::WartetAufRueckmeldung;
 }
 
-void IrrigationChannel::starteBewaesserung()
+void IrrigationChannel::starteBewaesserung(uint32_t maxLaufzeitSekunden)
 {
     if (_ZonenStatus != ZonenStatus::WartetAufStart) return; // Schutz vor Fehlaufrufen
+
+    if (_ermittelteLaufzeit_sekunden == 0)
+    {
+        logDebugP("Kanal %u: Start abgebrochen, Laufzeit = 0s", _channelIndex);
+        setZonenStatus(ZonenStatus::Inaktiv);
+        return;
+    }
+
+    // Laufzeit auf Restzeit des Fensters kuerzen (0 = keine Begrenzung)
+    if (maxLaufzeitSekunden > 0 && _ermittelteLaufzeit_sekunden > maxLaufzeitSekunden)
+    {
+        logDebugP("Kanal %u: Laufzeit gekuerzt %us -> %us (Fensterende)",
+                  _channelIndex, _ermittelteLaufzeit_sekunden, (uint16_t)maxLaufzeitSekunden);
+        _ermittelteLaufzeit_sekunden = (uint16_t)maxLaufzeitSekunden;
+        KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec);
+    }
 
     setZonenStatus(ZonenStatus::Laeuft);
     _kommandoStartMillis = millis();
@@ -392,6 +421,12 @@ void IrrigationChannel::starteBewaesserung()
     logDebugP("Kanal %u: Laeuft (geplante Laufzeit=%us)", _channelIndex, _ermittelteLaufzeit_sekunden);
 }
 
+void IrrigationChannel::verwerfeOffenenBedarf()
+{
+    if (_ZonenStatus != ZonenStatus::WartetAufStart) return;
+    setZonenStatus(ZonenStatus::Inaktiv);
+    logDebugP("Kanal %u: Bedarf im Fenster nicht bedient, wird morgen neu berechnet", _channelIndex);
+}
 
 String IrrigationChannel::wandle_Zonenstatus_in_Text(ZonenStatus status)
 {

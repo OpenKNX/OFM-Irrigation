@@ -79,7 +79,7 @@ private:
    
     bool hatOffenenBedarf() const;
     bool laeuftGerade() const;
-    void starteBewaesserung();
-
+    void starteBewaesserung(uint32_t maxLaufzeitSekunden = 0);
+    void verwerfeOffenenBedarf();
 };
 

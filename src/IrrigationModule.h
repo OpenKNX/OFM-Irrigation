@@ -73,7 +73,7 @@ class IrrigationModule : public OpenKNX::Module
 
     bool sindKompatibel(uint8_t zoneA, uint8_t zoneB);
     void pruefeUndStarteBewaesserungsfenster(void);
-    void koordiniereZonenstart(void);
+    void koordiniereZonenstart(uint32_t restSekunden);
 
     void process_Temperatur_Wetterstation(float aktuelleTemperatur);
     void process_Regenmenge_Wetterstation(float regenmengeHeuteMm);

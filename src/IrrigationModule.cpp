@@ -440,35 +440,40 @@ bool IrrigationModule::debug()
     return _debug;
 }
 
+// Kuerzere Restzeiten lohnen sich nicht (Ventil/Pumpe schalten, Rueckmeldung abwarten)
+static constexpr uint32_t MIN_RESTLAUFZEIT_S = 60; // fixme Todo könnte man auch als ETS Parameter machen
+
 void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
 {
+    if (!openknx.time.isValid()) return;
+
     tm tmNow;
     openknx.time.getLocalTime().toTm(tmNow);
 
     const uint16_t heute = getYearDay();
     const uint16_t jetzt = tmNow.tm_hour * 60 + tmNow.tm_min;
-
     const uint16_t start = ParamIRR_BewaesserungsstartStunde * 60 + ParamIRR_BewaesserungsstartMinute;
     const uint16_t ende  = ParamIRR_BewaesserungsendeStunde * 60 + ParamIRR_BewaesserungsendeMinute;
 
-    // Fenster ueber Mitternacht (z. B. 22:00 - 06:00)
     const bool ueberMitternacht = ende < start;
 
     bool imFenster;
-    if (start == ende)
-        imFenster = false; // Fenster der Laenge 0 -> nie aktiv
-    else if (!ueberMitternacht)
-        imFenster = (jetzt >= start && jetzt < ende);
-    else
-        imFenster = (jetzt >= start || jetzt < ende);
+    if (start == ende)         imFenster = false;
+    else if (!ueberMitternacht) imFenster = (jetzt >= start && jetzt < ende);
+    else                        imFenster = (jetzt >= start || jetzt < ende);
 
-    // Das "Fenster-Tag" ist der Tag, an dem das Fenster begonnen hat.
-    // Im Nachtanteil eines Mitternachtsfensters ist das der Vortag.
     uint16_t fensterTag = heute;
     if (ueberMitternacht && jetzt < ende)
         fensterTag = (heute == 0) ? 365 : heute - 1;
 
-    // Fenster oeffnen: einmal pro Fenster-Tag
+    // Restzeit bis Fensterende in Sekunden (0 ausserhalb des Fensters)
+    uint32_t restSekunden = 0;
+    if (imFenster)
+    {
+        const uint16_t restMin = (ende + 1440 - jetzt) % 1440; // im Fenster immer >= 1
+        restSekunden = restMin * 60UL - tmNow.tm_sec;
+    }
+
     if (imFenster && !_zeitfensterAktiv && _zeitfensterTag != fensterTag)
     {
         _zeitfensterAktiv = true;
@@ -478,19 +483,10 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
                  ParamIRR_BewaesserungsendeStunde, ParamIRR_BewaesserungsendeMinute);
     }
 
-    // Fenster schliessen
-    if (_zeitfensterAktiv && !imFenster)
-    {
-        _zeitfensterAktiv = false;
-        logInfoP("Bewaesserungsfenster beendet");
-        beendeAlleZonen(); // laufende Zonen sauber stoppen, Ventile schliessen
-    }
-
     if (_zeitfensterAktiv)
-    {
-        koordiniereZonenstart();
-    }   
+        koordiniereZonenstart(restSekunden);
 }
+
 
 bool IrrigationModule::sindKompatibel(uint8_t zoneA, uint8_t zoneB)
 {
@@ -570,37 +566,43 @@ bool IrrigationModule::sindKompatibel(uint8_t zoneA, uint8_t zoneB)
     return false; // sollte bei 1..12 nie erreicht werden
 }
 
-void IrrigationModule::koordiniereZonenstart(void)
+void IrrigationModule::koordiniereZonenstart(uint32_t restSekunden)
 {
+    const bool startsErlaubt = restSekunden >= MIN_RESTLAUFZEIT_S;
     bool nochOffenerBedarf = false;
     bool nochWelcheAmLaufen = false;
 
     for (uint8_t i = 0; i < _numChannels; i++)
     {
-        if (_channels[i] == nullptr) continue; // Falls der Kanal nicht existiert (leerer Zeiger) - überspringen
-        if (_channels[i]->laeuftGerade()) { nochWelcheAmLaufen = true; continue; } // Kanalbewässerung läuft - überspringen.
-        if (!_channels[i]->hatOffenenBedarf()) continue; // Kanal hat kein Bedarf - überspringen
+        if (_channels[i] == nullptr) continue;
+        if (_channels[i]->laeuftGerade()) { nochWelcheAmLaufen = true; continue; }
+        if (!_channels[i]->hatOffenenBedarf()) continue;
 
         nochOffenerBedarf = true;
-        bool startenErlaubt = true;
+        if (!startsErlaubt) continue;
 
-        // Bevor Kanal i gestartet wird, muss geprüft werden, ob er sich mit den Kanälen verträgt, die aktuell schon laufen.
+        bool startenErlaubt = true;
         for (uint8_t j = 0; j < _numChannels; j++)
         {
-            if (j == i || _channels[j] == nullptr || !_channels[j]->laeuftGerade()) continue; // Es werden nur Kanäle j betrachtet, die ungleich i sind und gerade aktiv laufen.
-                if (!sindKompatibel(i + 1, j + 1))  // Hier wird geprüft, ob Kanal i und der laufende Kanal j gleichzeitig aktiv sein dürfen
-                {
-                    startenErlaubt = false; // Start verbieten, nicht kompatibel
-                    break;                  // Weitere Prüfung nicht nötig, da bereits inkompatibel
-                }
+            if (j == i || _channels[j] == nullptr || !_channels[j]->laeuftGerade()) continue;
+            if (!sindKompatibel(i + 1, j + 1)) { startenErlaubt = false; break; }
         }
 
-        if (startenErlaubt) _channels[i]->starteBewaesserung();
+        if (startenErlaubt) _channels[i]->starteBewaesserung(restSekunden);
     }
 
-    if (!nochOffenerBedarf && !nochWelcheAmLaufen)
+    // Schliessen: nichts laeuft mehr und (kein Bedarf oder keine Restzeit mehr)
+    if (!nochWelcheAmLaufen && (!nochOffenerBedarf || !startsErlaubt))
     {
         _zeitfensterAktiv = false;
-        logInfoP("Bewaesserungsfenster beendet - alle Zonen abgearbeitet");
+
+        if (nochOffenerBedarf)
+        {
+            for (uint8_t i = 0; i < _numChannels; i++)
+                if (_channels[i] != nullptr) _channels[i]->verwerfeOffenenBedarf();
+            logInfoP("Bewaesserungsfenster abgelaufen - Restbedarf wird morgen neu berechnet");
+        }
+        else
+            logInfoP("Bewaesserungsfenster beendet - alle Zonen abgearbeitet");
     }
 }

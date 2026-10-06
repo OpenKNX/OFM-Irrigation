@@ -18,7 +18,6 @@
             <Parameters>
                <!-- Kanalname und -nummer (kein Speicher nötig) -->
               <Parameter Id="%AID%_P-%TT%%CC%001" Name="Ch%C%Name" ParameterType="%AID%_PT-Text40Byte" Text="Beschreibung der Zone" Value="" />
-              <Parameter Id="%AID%_P-%TT%%CC%002" Name="Ch%C%Number" ParameterType="%AID%_PT-ValueDpt5" Text="Nummer des Zone" Value="%C%" Access="None" />
               
             
               <!-- Memory Layout
@@ -34,8 +33,9 @@
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
 
                 <!-- Byte 0: Flags-A -->
-                <!-- 2 Bit: Kanalaktivität (Werte 0/1/2) -->
+                <!-- Kanalaktivität und Suspendierung -->
                 <Parameter Id="%AID%_UP-%TT%%CC%003" Name="Ch%C%Active"          ParameterType="%AID%_PT-IRRChannelActive" Text="Kanalaktivität"  Offset="0" BitOffset="0"   Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%014" Name="Ch%C%Suspended"      ParameterType="%AID%_PT-Suspended" Text="Suspendiert" Offset="0" BitOffset="1" Value="0" />
                 <!-- 4x 1 Bit -->
                 <Parameter Id="%AID%_UP-%TT%%CC%004" Name="CH%C%NiederschlagsrateViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="Niederschlagsrate über KO vorgeben?" Offset="0" BitOffset="2" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%006" Name="CH%C%SchwellwertViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="Schwellwert über KO vorgeben?" Offset="0" BitOffset="3" Value="0" />
@@ -61,6 +61,7 @@
               <ParameterRef Id="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_P-%TT%%CC%001" />  <!-- Beschreibung des Kanals -->
                <!-- Byte0 bis Byte5 -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_UP-%TT%%CC%003" /> <!-- Kanalaktivität --> 
+              <ParameterRef Id="%AID%_UP-%TT%%CC%014_R-%TT%%CC%01401" RefId="%AID%_UP-%TT%%CC%014" /> <!-- Suspendiert -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_UP-%TT%%CC%004" /> <!-- Niederschlagsrate via KO -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%005_R-%TT%%CC%00501" RefId="%AID%_UP-%TT%%CC%005" SuffixText="mm/h" /> <!-- Niederschlagsrate -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%006_R-%TT%%CC%00601" RefId="%AID%_UP-%TT%%CC%006" /> <!-- SchwellwertValue via ko -->
@@ -119,30 +120,32 @@
 
           <Dynamic>
             <ChannelIndependentBlock>
-              <choose ParamRefId="%AID%_UP-%TT%00001_R-%TT%0000101"> <!-- VisibleChannels -->
-                <when test="&gt;=%C%">
-                  <ParameterBlock Id="%AID%_PB-nnn" Text="Bewässerungszone %C%: {{0: ...}}" TextParameterRefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" Icon="sprinkler" HelpContext="Empty" ShowInComObjectTree="true">
-                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Kanaldefinition" UIHint="Headline" />
-                    <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" IndentLevel="1" HelpContext="%DOC%" /> <!-- Beschreibung Kanal -->
-                    <ParameterRefRef RefId="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301" IndentLevel="1" HelpContext="%DOC%" /> <!-- Kanalaktivität -->
-                    <choose ParamRefId="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301">
-                      <when test="2">
-                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Wenn ein Kanal funktionslos geschaltet wird, bleiben alle Parameter und GA-Zuweisungen erhalten, ohne dass der Kanal etwas macht. Dies kann bei einer Fehlersuche sinnvoll sein." />
-                      </when>
-                      <when test=">0">
-                        <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
-                 
-                        <!-- KOs anzeigen je Zone -->
-                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%016_R-%TT%%CC%01601" />                    <!-- ZonenSperre -->
-                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%017_R-%TT%%CC%01701" />                    <!-- Bedarf -->
-                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%018_R-%TT%%CC%01801" />                    <!-- Fehlmenge -->
-                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%019_R-%TT%%CC%01901" />                    <!-- Laufzeit% -->
-                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%020_R-%TT%%CC%02001" />                    <!-- Wasserbilanzkonto -->
-                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%021_R-%TT%%CC%02101" />                    <!-- Status Magentventil-->
-                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%022_R-%TT%%CC%02201" />                    <!--  Diagnose_Bewaesserung_gesperrt -->
-                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%023_R-%TT%%CC%02301" />                    <!-- Zone Ventilansteuerung -->
-                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%025_R-%TT%%CC%02501" />                    <!-- Zonenstatus -->
 
+              <!-- Block 1: eine Tabellenzeile pro Kanal in der Kanalauswahl -->
+              <ParameterBlock Id="%AID%_PB-nnn" Name="Settings">
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows><Row Id="%AID%_PB-nnn_R-1" /></Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="15%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="35%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Width="50%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Cell="1,1" Text="Bewässerungszone %C%" />
+                  <ParameterRefRef RefId="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301" Cell="1,2" HelpContext="%DOC%" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" Cell="1,3" HelpContext="BASE-ChannelName" />
+                </ParameterBlock>
+              </ParameterBlock>
+
+              <!-- Block 2: Kanal-Tab (Channel) (nur sichtbar wenn aktiv) -->
+              <ParameterBlock Id="%AID%_PB-nnn" Name="Channel">
+                <choose ParamRefId="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301">
+                  <when test="=1">
+                    <ParameterBlock Id="%AID%_PB-nnn" Name="Channel%C%Page" Text="Bewässerungszone %C%: {{0: ...}}" TextParameterRefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" Icon="sprinkler" HelpContext="Empty" ShowInComObjectTree="true">
+                      <ParameterSeparator Id="%AID%_PS-nnn" Text="Kanaldefinition" UIHint="Headline" />
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" IndentLevel="1" HelpContext="BASE-ChannelName" />
+                      <ParameterRefRef RefId="%AID%_UP-%TT%%CC%014_R-%TT%%CC%01401" IndentLevel="1" HelpContext="BASE-ChannelSuspended" />
+
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                         <ParameterSeparator Id="%AID%_PS-nnn" Text="Zonenparameter" UIHint="Headline" />
 
                         <ParameterRefRef RefId="%AID%_UP-%TT%%CC%005_R-%TT%%CC%00501" IndentLevel="1" HelpContext="%DOC%" />
@@ -171,7 +174,6 @@
                         </choose>
 
                         <ParameterRefRef RefId="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" IndentLevel="1" HelpContext="%DOC%" />
-                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Hier mit / 10 eingeben - 80 entspricht dann 0,8" /> 
                         <ParameterRefRef RefId="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001" IndentLevel="1" />
                         <choose ParamRefId="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001">
                           <when test="=1">
@@ -199,11 +201,21 @@
                         
                         <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
 
-                      </when>
-                    </choose>
+                        <!-- KOs anzeigen je Zone -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%016_R-%TT%%CC%01601" />                    <!-- ZonenSperre -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%017_R-%TT%%CC%01701" />                    <!-- Bedarf -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%018_R-%TT%%CC%01801" />                    <!-- Fehlmenge -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%019_R-%TT%%CC%01901" />                    <!-- Laufzeit% -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%020_R-%TT%%CC%02001" />                    <!-- Wasserbilanzkonto -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%021_R-%TT%%CC%02101" />                    <!-- Status Magentventil-->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%022_R-%TT%%CC%02201" />                    <!--  Diagnose_Bewaesserung_gesperrt -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%023_R-%TT%%CC%02301" />                    <!-- Zone Ventilansteuerung -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%025_R-%TT%%CC%02501" />                    <!-- Zonenstatus -->
+
                   </ParameterBlock>
                 </when>
               </choose>
+              </ParameterBlock>
             </ChannelIndependentBlock>
           </Dynamic>
         </ApplicationProgram>

@@ -98,10 +98,6 @@ Pro Zone unabhängig konfigurier- und auswertbar.
 ## Bewusst außerhalb des Moduls
 
 - **Ventilsteuerung/Aktorik** – liegt beim Host-Gerät. `OFM-Irrigation` liefert nur Bedarf + Laufzeit.
-- **Rückbuchung nach der Bewässerung** – muss der Host nach Ablauf der gemeldeten Laufzeit selbst anstoßen (z. B. durch erneutes Schreiben auf ein "Bewässerung beendet"-KO, sofern dafür ein Eingang ergänzt wird – noch offen, siehe unten).
+- **Rückbuchung nach der Bewässerung** – wird durch auslesen des Status automatisch durchgeführt.
 - **Regenmesser-Hardware, Temperatursensor-Hardware** – reine Zulieferer der beiden globalen Eingänge, keine Kenntnis im Modul nötig.
 
-## Offene Punkte für die Modul-Definition
-
-- Braucht `OFM-Irrigation` einen Eingang "Bewässerung beendet"/"tatsächlich abgegebene Menge" vom Host, um die Rückbuchung selbst zu übernehmen – oder bleibt auch das Host-Aufgabe?
-- Soll die Zonenanzahl über `VisibleChannels`-Muster (wie zuletzt besprochen) oder anders konfigurierbar sein?

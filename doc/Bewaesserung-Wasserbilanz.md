@@ -882,7 +882,7 @@ Konsequent aus Abschnitt 3 und 14 abgeleitet, sind in der ETS zwei Ebenen getren
 | Eingang: Aktuelle Temperatur       | \(T\), fließt in Tmin/Tmax/Tmean ein   |
 | Eingang: Regenmenge heute          | *Niederschlag* aus Abschnitt 4         |
 | Eingang: Globale Sperre            | *Sperre_Global* aus Abschnitt 8        |
-| Parameter: Bewässerungsfenster (Start-Stunde/-Minute) | *04:00/05:00 Uhr* aus Abschnitt 15 |
+| Parameter: Bewässerungsfenster (Start-/Ende-Stunde/-Minute) | *04:00/05:00 Uhr* aus Abschnitt 15 |
 | Parameter: Zonen-Kompatibilitätsmatrix | steuert, welche Zonen gleichzeitig laufen dürfen (Abschnitt 20.3) |
 | Ausgang: ET0 [mm/Tag]              | \(ET_0\) aus Abschnitt 2               |
 | Ausgang: Diagnose Tmax/Tmin/Tmean heute/gestern | Zwischenwerte der Tagesaggregation |

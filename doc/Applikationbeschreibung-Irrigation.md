@@ -75,10 +75,11 @@ Wassermenge in mm, die der Boden dieser Zone in der durchwurzelten Schicht pflan
 #### Kc-Faktor der Zone
 
 Kulturfaktor (Crop Coefficient). Skaliert die geräteweit berechnete Referenz-Evapotranspiration (ET0) auf den tatsächlichen Wasserbedarf der in dieser Zone vorhandenen Vegetation (ETc = ET0 × Kc).
+Eingabe in der ETS mit Division durch 10. Beispiel: Eingabewert 80 entspricht dann 0,8. 
 <!-- DOC -->
 #### ... über KO vorgeben?
 
-Schaltet den jeweiligen Parameter von einem festen ETS-Wert auf eine Vorgabe per Kommunikationsobjekt um – z. B. um den Kc-Faktor saisonal aus Home Assistant nachzuführen. Solange diese Option deaktiviert ist, gilt ausschließlich der links eingestellte ETS-Wert.
+Schaltet den jeweiligen Parameter von einem festen ETS-Wert auf eine Vorgabe per Kommunikationsobjekt um. Solange diese Option deaktiviert ist, gilt ausschließlich der eingestellte ETS-Wert.
 <!-- DOC -->
 #### Zonensperre
 

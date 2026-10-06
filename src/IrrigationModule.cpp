@@ -55,7 +55,7 @@ void IrrigationModule::loop()
             Tageswechsel_Werte_speichern((uint16_t)_letzterBekannterTag);
             calculateEt0(_letzterBekannterTag);
             _letzterBekannterTag = heute;
-            for (uint8_t i = 0; i < MIN(ParamIRR_VisibleChannels, IRR_ChannelCount); i++)
+            for (uint8_t i = 0; i < IRR_ChannelCount; i++)
             {
                 if (_channels[i] == nullptr) continue;
                 _channels[i]->process_Bewaesserungsberechnung_channel(_ET0_gestern, _Regenmenge_gestern, _Sperre_Global);
@@ -64,7 +64,7 @@ void IrrigationModule::loop()
         pruefeUndStarteBewaesserungsfenster();
     }
 
-    for (uint8_t i = 0; i < MIN(ParamIRR_VisibleChannels, IRR_ChannelCount); i++)  
+    for (uint8_t i = 0; i < IRR_ChannelCount; i++)
     {      
         _channels[i]->loop();
     }
@@ -73,7 +73,7 @@ void IrrigationModule::loop()
 void IrrigationModule::setup() 
 {
     logInfoP("setup() START");
-    _numChannels = MIN(ParamIRR_VisibleChannels, IRR_ChannelCount);
+    _numChannels = IRR_ChannelCount;
     logInfoP("_numChannels=%d", _numChannels);
     for (uint8_t i = 0; i < _numChannels; i++)
     {
@@ -109,7 +109,7 @@ void IrrigationModule::processInputKo(GroupObject &iKo)
         _Sperre_Global = KoIRR_GlobaleSperre.value(DPT_Enable);
     }
 
-    for (uint8_t i = 0; i < MIN(ParamIRR_VisibleChannels, IRR_ChannelCount); i++)
+    for (uint8_t i = 0; i < IRR_ChannelCount; i++)
     {
         if (_channels[i] == nullptr) continue;
         logDebugP("_channels[ %i ]", i+1);
@@ -176,7 +176,7 @@ uint16_t IrrigationModule::flashSize()
     openknx.flash.writeFloat(_Regenmenge_gestern);
 
 
-    // jeder Kanal-Slot wird IMMER geschrieben, unabhängig von VisibleChannels ----
+    // jeder Kanal-Slot wird IMMER geschrieben
     for (uint8_t i = 0; i < IRR_ChannelCount; i++)
     {
         _channels[i]->save();
@@ -237,7 +237,7 @@ void IrrigationModule::readFlash(const uint8_t* data, const uint16_t size)
     }
 
 
-    // jeder Kanal-Slot wird IMMER gelesen, unabhängig von VisibleChannels 
+    // jeder Kanal-Slot wird IMMER gelesen 
     for (uint8_t i = 0; i < IRR_ChannelCount; i++)
     {
         _channels[i]->restore();
@@ -444,18 +444,52 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
 {
     tm tmNow;
     openknx.time.getLocalTime().toTm(tmNow);
-    uint16_t heute = getYearDay();
 
-    if (!_zeitfensterAktiv && _zeitfensterTag != heute &&
-        tmNow.tm_hour == ParamIRR_BewaesserungsstartStunde &&
-        tmNow.tm_min == ParamIRR_BewaesserungsstartMinute)
+    const uint16_t heute = getYearDay();
+    const uint16_t jetzt = tmNow.tm_hour * 60 + tmNow.tm_min;
+
+    const uint16_t start = ParamIRR_BewaesserungsstartStunde * 60 + ParamIRR_BewaesserungsstartMinute;
+    const uint16_t ende  = ParamIRR_BewaesserungsendeStunde * 60 + ParamIRR_BewaesserungsendeMinute;
+
+    // Fenster ueber Mitternacht (z. B. 22:00 - 06:00)
+    const bool ueberMitternacht = ende < start;
+
+    bool imFenster;
+    if (start == ende)
+        imFenster = false; // Fenster der Laenge 0 -> nie aktiv
+    else if (!ueberMitternacht)
+        imFenster = (jetzt >= start && jetzt < ende);
+    else
+        imFenster = (jetzt >= start || jetzt < ende);
+
+    // Das "Fenster-Tag" ist der Tag, an dem das Fenster begonnen hat.
+    // Im Nachtanteil eines Mitternachtsfensters ist das der Vortag.
+    uint16_t fensterTag = heute;
+    if (ueberMitternacht && jetzt < ende)
+        fensterTag = (heute == 0) ? 365 : heute - 1;
+
+    // Fenster oeffnen: einmal pro Fenster-Tag
+    if (imFenster && !_zeitfensterAktiv && _zeitfensterTag != fensterTag)
     {
         _zeitfensterAktiv = true;
-        _zeitfensterTag = heute;
-        logInfoP("Bewaesserungsfenster gestartet");
+        _zeitfensterTag = fensterTag;
+        logInfoP("Bewaesserungsfenster gestartet (%02d:%02d - %02d:%02d)",
+                 ParamIRR_BewaesserungsstartStunde, ParamIRR_BewaesserungsstartMinute,
+                 ParamIRR_BewaesserungsendeStunde, ParamIRR_BewaesserungsendeMinute);
     }
 
-    if (_zeitfensterAktiv) koordiniereZonenstart();
+    // Fenster schliessen
+    if (_zeitfensterAktiv && !imFenster)
+    {
+        _zeitfensterAktiv = false;
+        logInfoP("Bewaesserungsfenster beendet");
+        beendeAlleZonen(); // laufende Zonen sauber stoppen, Ventile schliessen
+    }
+
+    if (_zeitfensterAktiv)
+    {
+        koordiniereZonenstart();
+    }   
 }
 
 bool IrrigationModule::sindKompatibel(uint8_t zoneA, uint8_t zoneB)
@@ -481,7 +515,59 @@ bool IrrigationModule::sindKompatibel(uint8_t zoneA, uint8_t zoneB)
     if (a == 4 && b == 6) return ParamIRR_KompatibelZone4Zone6;
     if (a == 5 && b == 6) return ParamIRR_KompatibelZone5Zone6;
 
-    return false; // sollte bei 1..6 nie erreicht werden
+    if (a == 1 && b == 7) return ParamIRR_KompatibelZone1Zone7;
+    if (a == 1 && b == 8) return ParamIRR_KompatibelZone1Zone8;
+    if (a == 1 && b == 9) return ParamIRR_KompatibelZone1Zone9;
+    if (a == 1 && b == 10) return ParamIRR_KompatibelZone1Zone10;
+    if (a == 1 && b == 11) return ParamIRR_KompatibelZone1Zone11;
+    if (a == 1 && b == 12) return ParamIRR_KompatibelZone1Zone12;
+    if (a == 2 && b == 7) return ParamIRR_KompatibelZone2Zone7;
+    if (a == 2 && b == 8) return ParamIRR_KompatibelZone2Zone8;
+    if (a == 2 && b == 9) return ParamIRR_KompatibelZone2Zone9;
+    if (a == 2 && b == 10) return ParamIRR_KompatibelZone2Zone10;
+    if (a == 2 && b == 11) return ParamIRR_KompatibelZone2Zone11;
+    if (a == 2 && b == 12) return ParamIRR_KompatibelZone2Zone12;
+    if (a == 3 && b == 7) return ParamIRR_KompatibelZone3Zone7;
+    if (a == 3 && b == 8) return ParamIRR_KompatibelZone3Zone8;
+    if (a == 3 && b == 9) return ParamIRR_KompatibelZone3Zone9;
+    if (a == 3 && b == 10) return ParamIRR_KompatibelZone3Zone10;
+    if (a == 3 && b == 11) return ParamIRR_KompatibelZone3Zone11;
+    if (a == 3 && b == 12) return ParamIRR_KompatibelZone3Zone12;
+    if (a == 4 && b == 7) return ParamIRR_KompatibelZone4Zone7;
+    if (a == 4 && b == 8) return ParamIRR_KompatibelZone4Zone8;
+    if (a == 4 && b == 9) return ParamIRR_KompatibelZone4Zone9;
+    if (a == 4 && b == 10) return ParamIRR_KompatibelZone4Zone10;
+    if (a == 4 && b == 11) return ParamIRR_KompatibelZone4Zone11;
+    if (a == 4 && b == 12) return ParamIRR_KompatibelZone4Zone12;
+    if (a == 5 && b == 7) return ParamIRR_KompatibelZone5Zone7;
+    if (a == 5 && b == 8) return ParamIRR_KompatibelZone5Zone8;
+    if (a == 5 && b == 9) return ParamIRR_KompatibelZone5Zone9;
+    if (a == 5 && b == 10) return ParamIRR_KompatibelZone5Zone10;
+    if (a == 5 && b == 11) return ParamIRR_KompatibelZone5Zone11;
+    if (a == 5 && b == 12) return ParamIRR_KompatibelZone5Zone12;
+    if (a == 6 && b == 7) return ParamIRR_KompatibelZone6Zone7;
+    if (a == 6 && b == 8) return ParamIRR_KompatibelZone6Zone8;
+    if (a == 6 && b == 9) return ParamIRR_KompatibelZone6Zone9;
+    if (a == 6 && b == 10) return ParamIRR_KompatibelZone6Zone10;
+    if (a == 6 && b == 11) return ParamIRR_KompatibelZone6Zone11;
+    if (a == 6 && b == 12) return ParamIRR_KompatibelZone6Zone12;
+    if (a == 7 && b == 8) return ParamIRR_KompatibelZone7Zone8;
+    if (a == 7 && b == 9) return ParamIRR_KompatibelZone7Zone9;
+    if (a == 7 && b == 10) return ParamIRR_KompatibelZone7Zone10;
+    if (a == 7 && b == 11) return ParamIRR_KompatibelZone7Zone11;
+    if (a == 7 && b == 12) return ParamIRR_KompatibelZone7Zone12;
+    if (a == 8 && b == 9) return ParamIRR_KompatibelZone8Zone9;
+    if (a == 8 && b == 10) return ParamIRR_KompatibelZone8Zone10;
+    if (a == 8 && b == 11) return ParamIRR_KompatibelZone8Zone11;
+    if (a == 8 && b == 12) return ParamIRR_KompatibelZone8Zone12;
+    if (a == 9 && b == 10) return ParamIRR_KompatibelZone9Zone10;
+    if (a == 9 && b == 11) return ParamIRR_KompatibelZone9Zone11;
+    if (a == 9 && b == 12) return ParamIRR_KompatibelZone9Zone12;
+    if (a == 10 && b == 11) return ParamIRR_KompatibelZone10Zone11;
+    if (a == 10 && b == 12) return ParamIRR_KompatibelZone10Zone12;
+    if (a == 11 && b == 12) return ParamIRR_KompatibelZone11Zone12;
+
+    return false; // sollte bei 1..12 nie erreicht werden
 }
 
 void IrrigationModule::koordiniereZonenstart(void)

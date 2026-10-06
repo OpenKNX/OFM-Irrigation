@@ -126,7 +126,7 @@ void IrrigationChannel::loop()
 
 void IrrigationChannel::setup() 
 {
-    _channelActive = (ParamIRR_ChActive == 1);
+    _channelActive = (ParamIRR_ChActive == 1) && (ParamIRR_ChSuspended == 0);
     if (!_channelActive) 
     {
         logDebugP("Channel %u: not active!", _channelIndex);

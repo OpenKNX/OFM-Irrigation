@@ -126,9 +126,9 @@
                 <Parameter Id="%AID%_UP-%TT%00095" Name="KompatibelZone11Zone12" ParameterType="%AID%_PT-CheckBox" Text="Zone 11 + Zone 12" Offset="8" BitOffset="1" Value="0" />
               </Union>
               <Union SizeInBit="40"> <Memory CodeSegment="%MID%" Offset="10" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%00020" Name="BewaesserungsstartStunde" ParameterType="%AID%_PT-IRRStunde" Text="Bewässerungsfenster: Startstunde" Offset="0" BitOffset="0" Value="4" /> 
+                <Parameter Id="%AID%_UP-%TT%00020" Name="BewaesserungsstartStunde" ParameterType="%AID%_PT-IRRStunde" Text="Bewässerungsfenster: Startstunde" Offset="0" BitOffset="0" Value="3" /> 
                 <Parameter Id="%AID%_UP-%TT%00021" Name="BewaesserungsstartMinute" ParameterType="%AID%_PT-IRRMinute" Text="Bewässerungsfenster: Startminute" Offset="1" BitOffset="0" Value="0" /> 
-                <Parameter Id="%AID%_UP-%TT%00022" Name="BewaesserungsendeStunde" ParameterType="%AID%_PT-IRRStunde" Text="Bewässerungsfenster: Endstunde" Offset="2" BitOffset="0" Value="5" /> 
+                <Parameter Id="%AID%_UP-%TT%00022" Name="BewaesserungsendeStunde" ParameterType="%AID%_PT-IRRStunde" Text="Bewässerungsfenster: Endstunde" Offset="2" BitOffset="0" Value="6" /> 
                 <Parameter Id="%AID%_UP-%TT%00023" Name="BewaesserungsendeMinute" ParameterType="%AID%_PT-IRRMinute" Text="Bewässerungsfenster: Endminute" Offset="3" BitOffset="0" Value="0" /> 
                 <Parameter Id="%AID%_UP-%TT%00024" Name="RegenmengeDpt" ParameterType="%AID%_PT-IRRRainDpt" Text="Datentyp Regenmenge" Offset="4" BitOffset="0" Value="1" />  
               </Union>
@@ -277,18 +277,18 @@
                     <Row Id="%AID%_PB-nnn_R-12" />
                   </Rows>
                   <Columns>
-                    <Column Id="%AID%_PB-nnn_C-0" Width="8%" />
-                    <Column Id="%AID%_PB-nnn_C-1" Width="8%" />
-                    <Column Id="%AID%_PB-nnn_C-2" Width="8%" />
-                    <Column Id="%AID%_PB-nnn_C-3" Width="8%" />
-                    <Column Id="%AID%_PB-nnn_C-4" Width="8%" />
-                    <Column Id="%AID%_PB-nnn_C-5" Width="8%" />
-                    <Column Id="%AID%_PB-nnn_C-6" Width="8%" />
-                    <Column Id="%AID%_PB-nnn_C-7" Width="8%" />
-                    <Column Id="%AID%_PB-nnn_C-8" Width="8%" />
-                    <Column Id="%AID%_PB-nnn_C-9" Width="8%" />
-                    <Column Id="%AID%_PB-nnn_C-10" Width="8%" />
-                    <Column Id="%AID%_PB-nnn_C-11" Width="8%" />
+                    <Column Id="%AID%_PB-nnn_C-0" Width="20%" />
+                    <Column Id="%AID%_PB-nnn_C-1" Width="20%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="20%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Width="20%" />
+                    <Column Id="%AID%_PB-nnn_C-4" Width="20%" />
+                    <Column Id="%AID%_PB-nnn_C-5" Width="20%" />
+                    <Column Id="%AID%_PB-nnn_C-6" Width="20%" />
+                    <Column Id="%AID%_PB-nnn_C-7" Width="20%" />
+                    <Column Id="%AID%_PB-nnn_C-8" Width="20%" />
+                    <Column Id="%AID%_PB-nnn_C-9" Width="20%" />
+                    <Column Id="%AID%_PB-nnn_C-10" Width="20%" />
+                    <Column Id="%AID%_PB-nnn_C-11" Width="20%" />
                   </Columns>
 
                   <!-- Spaltenköpfe nur für aktivierte Zonen -->
@@ -473,7 +473,7 @@
                 <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
                   <Rows><Row Id="%AID%_PB-nnn_R-1" /></Rows>
                   <Columns>
-                    <Column Id="%AID%_PB-nnn_C-1" Width="15%" />
+                    <Column Id="%AID%_PB-nnn_C-1" Width="23%" />
                     <Column Id="%AID%_PB-nnn_C-2" Width="35%" />
                     <Column Id="%AID%_PB-nnn_C-3" Width="50%" />
                   </Columns>

@@ -126,7 +126,7 @@
                 <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
                   <Rows><Row Id="%AID%_PB-nnn_R-1" /></Rows>
                   <Columns>
-                    <Column Id="%AID%_PB-nnn_C-1" Width="15%" />
+                    <Column Id="%AID%_PB-nnn_C-1" Width="23%" />
                     <Column Id="%AID%_PB-nnn_C-2" Width="35%" />
                     <Column Id="%AID%_PB-nnn_C-3" Width="50%" />
                   </Columns>

@@ -2,7 +2,7 @@
 
 // Change the following 3 lines and adopt to your module names
 #define ModuleVersion_ModuleName "Irrigation"
-#define ModuleVersion_knxprod_h Irrigation_ModuleVersion
+#define ModuleVersion_knxprod_h IRR_ModuleVersion
 #define ModuleVersion_version_h MODULE_Irrigation_ETS
 
 // ATTENTION: This file is evaluated during build, by OpenKNXproducer and some build scripts.

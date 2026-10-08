@@ -1,4 +1,4 @@
 ﻿### Beschreibung des Kanals
 
-Der hier angegebene Name wird an verschiedenen Stellen verwendet, um diesen Kanal eindeutig zu identifizieren. z.B. Küche, Bad, etc.
+Der hier angegebene Name dient zur eindeutigen Wiedererkennung der Bewässerungszone, zum Beispiel „Rasen“, „Beet“ oder „Vorgarten“. Er wird auch als Titel der Zonenseite verwendet.
 

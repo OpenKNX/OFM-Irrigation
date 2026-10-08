@@ -1,4 +1,3 @@
 ﻿### Kanalaktivität
 
-Hier kann man einen PowerAmp-Kanal aktivieren.
-
+Hier wird festgelegt, ob die Bewässerungszone verwendet wird.

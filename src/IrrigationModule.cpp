@@ -34,40 +34,32 @@ const std::string IrrigationModule::version()
 
 void IrrigationModule::loop()
 {
-    if (!openknx.time.isValid())
+    if (openknx.time.isValid())
     {
-        return; // Uhr hat noch kein gültiges Datum vom Bus
-    }
-    else
-    {
-        uint16_t heute = getYearDay();
+        const uint16_t heute = getYearDay();
         if (_letzterBekannterTag == -1)
-        {
-            // erster gültiger Aufruf nach Neustart - nur merken, NICHT als
-            // Tageswechsel werten (sonst würde beim Boot sofort "gestern"
-            // mit leeren Werten überschrieben)
             _letzterBekannterTag = heute;
-            return;
-        }
         else if (heute != _letzterBekannterTag)
         {
-            // plausi, letzerbekannter tag sollte heute -1 sein, bzw 366 zu 1
             Tageswechsel_Werte_speichern((uint16_t)_letzterBekannterTag);
             calculateEt0(_letzterBekannterTag);
             _letzterBekannterTag = heute;
+            _berechnungAusstehend = true;
+        }
+
+        if (_berechnungAusstehend && !_zeitfensterAktiv)
+        {
+            _berechnungAusstehend = false;
             for (uint8_t i = 0; i < IRR_ChannelCount; i++)
-            {
-                if (_channels[i] == nullptr) continue;
-                _channels[i]->process_Bewaesserungsberechnung_channel(_ET0_gestern, _Regenmenge_gestern, _Sperre_Global);
-            }
-        } 
+                if (_channels[i] != nullptr)
+                    _channels[i]->process_Bewaesserungsberechnung_channel(_ET0_gestern, _Regenmenge_gestern, _Sperre_Global);
+        }
         pruefeUndStarteBewaesserungsfenster();
     }
 
+    // Ventil-Timer laufen auf millis(), unabhängig von der Uhr
     for (uint8_t i = 0; i < IRR_ChannelCount; i++)
-    {      
         _channels[i]->loop();
-    }
 }
 
 void IrrigationModule::setup() 
@@ -106,7 +98,7 @@ void IrrigationModule::processInputKo(GroupObject &iKo)
     }
     else if  (iKo.asap() == IRR_KoGlobaleSperre)
     {
-        _Sperre_Global = KoIRR_GlobaleSperre.value(DPT_Enable);
+        _Sperre_Global = KoIRR_GlobaleSperre.value(DPT_Switch);
     }
 
     for (uint8_t i = 0; i < IRR_ChannelCount; i++)
@@ -162,7 +154,7 @@ uint16_t IrrigationModule::flashSize()
     }
     
     // version
-    openknx.flash.writeByte(1);
+    openknx.flash.writeByte(IRR_FLASH_VERSION);
 
     uint32_t currentYday = openknx.time.isValid() ? getYearDay() : 0;
 
@@ -189,7 +181,7 @@ uint16_t IrrigationModule::flashSize()
 
 void IrrigationModule::readFlash(const uint8_t* data, const uint16_t size)
 {
-    logIndentUp();
+    
     if (size < flashSize()) // no channels present
     {
         logDebugP("Flash data short (have %u, need %u)!", size, flashSize());
@@ -211,7 +203,7 @@ void IrrigationModule::readFlash(const uint8_t* data, const uint16_t size)
         logDebugP("Wrong version (%d)", version);
         return;
     }
-
+    logIndentUp();
     uint16_t restoredcurrentYday = openknx.flash.readInt();
     float restoredTemperatur_max_heute = openknx.flash.readFloat();
     float restoredTemperatur_min_heute = openknx.flash.readFloat();
@@ -226,6 +218,7 @@ void IrrigationModule::readFlash(const uint8_t* data, const uint16_t size)
     {
         _Temperatur_max_heute = restoredTemperatur_max_heute;
         _Temperatur_min_heute = restoredTemperatur_min_heute;
+        _Temperatur_Durchschnitt_heute = (_Temperatur_max_heute + _Temperatur_min_heute) / 2;
         _gueltigeWerte_heute = true;
     }
     else
@@ -247,8 +240,9 @@ void IrrigationModule::readFlash(const uint8_t* data, const uint16_t size)
 }
 
 // ---- Tageswechsel: gestern einfrieren, ET0 rechnen, heute zurücksetzen --
-void IrrigationModule::Tageswechsel_Werte_speichern(uint16_t gestern)
+void IrrigationModule::Tageswechsel_Werte_speichern(uint16_t Tag_gestern)
 {
+    _gueltigeWerte_gestern = _gueltigeWerte_heute;
     if (!_gueltigeWerte_heute)
     {
         logDebugP("Tageswechsel ohne Temperaturdaten - überspringe");
@@ -292,7 +286,7 @@ uint16_t IrrigationModule::getYearDay(void)
 
 void IrrigationModule::calculateEt0(uint16_t TagdesJahres)
 {
-    if (!_gueltigeWerte_heute) 
+    if (!_gueltigeWerte_gestern) 
     { 
         _ET0_gestern = 0.0f; 
         logDebugP("calculateEt0: keine gültigen Temperaturwerte für gestern, ET0_gestern=0.0");
@@ -441,7 +435,7 @@ bool IrrigationModule::debug()
 }
 
 // Kuerzere Restzeiten lohnen sich nicht (Ventil/Pumpe schalten, Rueckmeldung abwarten)
-static constexpr uint32_t MIN_RESTLAUFZEIT_S = 60; // fixme Todo könnte man auch als ETS Parameter machen
+static constexpr uint16_t MIN_RESTLAUFZEIT_MIN  = 10; // fixme Todo könnte man auch als ETS Parameter machen
 
 void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
 {
@@ -450,41 +444,60 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
     tm tmNow;
     openknx.time.getLocalTime().toTm(tmNow);
 
-    const uint16_t heute = getYearDay();
+    constexpr uint16_t MINUTEN_PRO_TAG = 24 * 60;
+
     const uint16_t jetzt = tmNow.tm_hour * 60 + tmNow.tm_min;
     const uint16_t start = ParamIRR_BewaesserungsstartStunde * 60 + ParamIRR_BewaesserungsstartMinute;
     const uint16_t ende  = ParamIRR_BewaesserungsendeStunde * 60 + ParamIRR_BewaesserungsendeMinute;
 
-    const bool ueberMitternacht = ende < start;
+    bool imFenster = false;
+    uint16_t restMinuten = 0;
 
-    bool imFenster;
-    if (start == ende)         imFenster = false;
-    else if (!ueberMitternacht) imFenster = (jetzt >= start && jetzt < ende);
-    else                        imFenster = (jetzt >= start || jetzt < ende);
-
-    uint16_t fensterTag = heute;
-    if (ueberMitternacht && jetzt < ende)
-        fensterTag = (heute == 0) ? 365 : heute - 1;
-
-    // Restzeit bis Fensterende in Sekunden (0 ausserhalb des Fensters)
-    uint32_t restSekunden = 0;
-    if (imFenster)
+    if (start == ende)
     {
-        const uint16_t restMin = (ende + 1440 - jetzt) % 1440; // im Fenster immer >= 1
-        restSekunden = restMin * 60UL - tmNow.tm_sec;
+        // Fenster der Laenge 0: nie aktiv
+    }
+    else if (start < ende)
+    {
+        // Normales Fenster, z. B. 06:00 - 08:00
+        if (jetzt >= start && jetzt < ende)
+        {
+            imFenster = true;
+            restMinuten = ende - jetzt;
+        }
+    }
+    else
+    {
+        // Fenster ueber Mitternacht, z. B. 22:00 - 06:00
+        if (jetzt >= start)
+        {
+            // Abendteil: bis Mitternacht + Zeit von Mitternacht bis Ende
+            imFenster = true;
+            restMinuten = (MINUTEN_PRO_TAG - jetzt) + ende;
+        }
+        else if (jetzt < ende)
+        {
+            // Morgenteil: nur noch bis Ende
+            imFenster = true;
+            restMinuten = ende - jetzt;
+        }
     }
 
-    if (imFenster && !_zeitfensterAktiv && _zeitfensterTag != fensterTag)
+    // Fenster verlassen: naechster Eintritt ist ein neues Fenster
+    if (!imFenster)
+        _fensterBereitsGestartet = false;
+
+    if (imFenster && !_zeitfensterAktiv && !_fensterBereitsGestartet)
     {
         _zeitfensterAktiv = true;
-        _zeitfensterTag = fensterTag;
+        _fensterBereitsGestartet = true;
         logInfoP("Bewaesserungsfenster gestartet (%02d:%02d - %02d:%02d)",
                  ParamIRR_BewaesserungsstartStunde, ParamIRR_BewaesserungsstartMinute,
                  ParamIRR_BewaesserungsendeStunde, ParamIRR_BewaesserungsendeMinute);
     }
 
     if (_zeitfensterAktiv)
-        koordiniereZonenstart(restSekunden);
+        koordiniereZonenstart(restMinuten);
 }
 
 
@@ -566,9 +579,9 @@ bool IrrigationModule::sindKompatibel(uint8_t zoneA, uint8_t zoneB)
     return false; // sollte bei 1..12 nie erreicht werden
 }
 
-void IrrigationModule::koordiniereZonenstart(uint32_t restSekunden)
+void IrrigationModule::koordiniereZonenstart(uint16_t restMinuten)
 {
-    const bool startsErlaubt = restSekunden >= MIN_RESTLAUFZEIT_S;
+    const bool startsErlaubt = restMinuten >= MIN_RESTLAUFZEIT_MIN;
     bool nochOffenerBedarf = false;
     bool nochWelcheAmLaufen = false;
 
@@ -588,7 +601,7 @@ void IrrigationModule::koordiniereZonenstart(uint32_t restSekunden)
             if (!sindKompatibel(i + 1, j + 1)) { startenErlaubt = false; break; }
         }
 
-        if (startenErlaubt) _channels[i]->starteBewaesserung(restSekunden);
+        if (startenErlaubt) _channels[i]->starteBewaesserung(restMinuten);
     }
 
     // Schliessen: nichts laeuft mehr und (kein Bedarf oder keine Restzeit mehr)

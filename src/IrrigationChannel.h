@@ -79,7 +79,7 @@ private:
    
     bool hatOffenenBedarf() const;
     bool laeuftGerade() const;
-    void starteBewaesserung(uint32_t maxLaufzeitSekunden = 0);
+    void starteBewaesserung(uint16_t maxLaufzeitMinuten = 0); // 0 = keine Begrenzung
     void verwerfeOffenenBedarf();
 };
 

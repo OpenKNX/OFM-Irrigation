@@ -35,7 +35,7 @@ class IrrigationModule : public OpenKNX::Module
   private:
     IrrigationChannel *_channels[IRR_ChannelCount] = {}; // init mit // channel[0] = nullptr, // channel[1] = nullptr, usw
     uint8_t _numChannels = 0;
-    bool _Sperre_Global = true;
+    bool _Sperre_Global = false;
 
     float _ET0_gestern;
 
@@ -60,8 +60,9 @@ class IrrigationModule : public OpenKNX::Module
     float _Temperatur_min_heute = 42.0;
     float _Temperatur_Durchschnitt_heute = -42.0;
     bool _gueltigeWerte_heute = false;
-
+    
     // Gestrige Werte
+    bool _gueltigeWerte_gestern = false;
     float _Temperatur_max_gestern = -42.0;
     float _Temperatur_min_gestern = 42.0;
     float _Temperatur_Durchschnitt_gestern = -42.0;
@@ -69,11 +70,13 @@ class IrrigationModule : public OpenKNX::Module
 
 
     bool _zeitfensterAktiv = false;
-    int16_t _zeitfensterTag = -1; // verhindert Mehrfachstart am selben Tag
+    bool _fensterBereitsGestartet = false; // verhindert Mehrfachstart innerhalb desselben Fensters
+
+    bool _berechnungAusstehend = false;
 
     bool sindKompatibel(uint8_t zoneA, uint8_t zoneB);
     void pruefeUndStarteBewaesserungsfenster(void);
-    void koordiniereZonenstart(uint32_t restSekunden);
+    void koordiniereZonenstart(uint16_t restMinuten);
 
     void process_Temperatur_Wetterstation(float aktuelleTemperatur);
     void process_Regenmenge_Wetterstation(float regenmengeHeuteMm);

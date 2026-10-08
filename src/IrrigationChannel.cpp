@@ -38,10 +38,14 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
         return;
     }
 
-    logIndentUp();
+    
     logDebugP("[channel]processInputKo: channel %u", _channelIndex);
   
-    switch (IRR_KoCalcIndex(iKo.asap()))
+
+    int32_t idx = IRR_KoCalcIndex(iKo.asap());
+    if (idx < 0) return; // KO gehoert zu einem anderen Kanal oder Modul
+    logIndentUp();
+    switch (idx)
     {
         case IRR_KoChNiederschlagsrate:
         {
@@ -88,7 +92,7 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
         }
    
         default:
-            logDebugP("default case processInputKo: unknown KO index %u", IRR_KoCalcIndex(iKo.asap()));
+            logDebugP("default case processInputKo: unknown KO index %d", idx);
             break;   
     }
     logIndentDown();
@@ -137,6 +141,7 @@ void IrrigationChannel::setup()
     _Schwellwert_P_Prozent_Zone = ParamIRR_CHSchwellwertValue;
     _nutzbareFeldkapazitaet_nFK_Zone = ParamIRR_CHnFKValue;
     _Kulturfaktor_Kc_Zone = ParamIRR_CHKcValue / 10.0f;
+    _Wasserbilanzkonto = _nutzbareFeldkapazitaet_nFK_Zone; // Start optimistisch: Konto voll
     setKOInitialValues(); 
 }
 
@@ -395,7 +400,7 @@ bool IrrigationChannel::laeuftGerade() const
     return _ZonenStatus == ZonenStatus::Laeuft || _ZonenStatus == ZonenStatus::WartetAufRueckmeldung;
 }
 
-void IrrigationChannel::starteBewaesserung(uint32_t maxLaufzeitSekunden)
+void IrrigationChannel::starteBewaesserung(uint16_t maxLaufzeitMinuten)
 {
     if (_ZonenStatus != ZonenStatus::WartetAufStart) return; // Schutz vor Fehlaufrufen
 
@@ -406,7 +411,7 @@ void IrrigationChannel::starteBewaesserung(uint32_t maxLaufzeitSekunden)
         return;
     }
 
-    // Laufzeit auf Restzeit des Fensters kuerzen (0 = keine Begrenzung)
+     const uint32_t maxLaufzeitSekunden = maxLaufzeitMinuten * 60UL;
     if (maxLaufzeitSekunden > 0 && _ermittelteLaufzeit_sekunden > maxLaufzeitSekunden)
     {
         logDebugP("Kanal %u: Laufzeit gekuerzt %us -> %us (Fensterende)",

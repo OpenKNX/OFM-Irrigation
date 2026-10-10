@@ -248,14 +248,30 @@
                 <ParameterRefRef RefId="%AID%_UP-%TT%00022_R-%TT%0002201" HelpContext="%DOC%" IndentLevel="1" /> <!-- EndzeitStunde -->
                 <ParameterRefRef RefId="%AID%_UP-%TT%00023_R-%TT%0002301" HelpContext="%DOC%" IndentLevel="1" /> <!-- EndzeitMinute -->
                 
+
+                <!-- globale KOs -->
+                <ComObjectRefRef RefId="%AID%_O-%TT%00100_R-%TT%0010001" />              <!-- ET0 -->
+                <ComObjectRefRef RefId="%AID%_O-%TT%00101_R-%TT%0010101" />              <!-- Temperatur -->
+
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Wetterdaten" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00024_R-%TT%0002401" HelpContext="IRR-Regenmenge-heute" IndentLevel="1" />
                 <choose ParamRefId="%AID%_UP-%TT%00024_R-%TT%0002401"> 
-                  <when test="0"><ComObjectRefRef RefId="%AID%_O-%TT%00102_R-%TT%0010201" /></when> <!--DPT9-->
-                  <when test="1"><ComObjectRefRef RefId="%AID%_O-%TT%00102_R-%TT%0010202" /></when> <!--DPT14-->
+                  <when test="0"><ComObjectRefRef RefId="%AID%_O-%TT%00102_R-%TT%0010201" /></when> <!--DPT9 Regenmenge heute --> 
+                  <when test="1"><ComObjectRefRef RefId="%AID%_O-%TT%00102_R-%TT%0010202" /></when> <!--DPT14 Regenmenge heute -->
                 </choose>
+     
+                <!-- globale KOs weiter, damit die Reihenfolge stimmt-->
+                <ComObjectRefRef RefId="%AID%_O-%TT%00103_R-%TT%0010301" />              <!-- GlobaleSperre -->
+                <ComObjectRefRef RefId="%AID%_O-%TT%00104_R-%TT%0010401" />              <!-- TDurchschnittHeute -->
+                <ComObjectRefRef RefId="%AID%_O-%TT%00105_R-%TT%0010501" />              <!-- TDurchschnittGestern -->
+                <ComObjectRefRef RefId="%AID%_O-%TT%00106_R-%TT%0010601" />              <!-- TMaxHeute -->
+                <ComObjectRefRef RefId="%AID%_O-%TT%00107_R-%TT%0010701" />              <!-- TMinHeute -->
+                <ComObjectRefRef RefId="%AID%_O-%TT%00108_R-%TT%0010801" />              <!-- TMaxGestern -->
+                <ComObjectRefRef RefId="%AID%_O-%TT%00109_R-%TT%0010901" />              <!-- TMinGestern -->
+                <!-- ComObject für Regenmenge ist schon weiter oben definiert -->
     
+
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Gleichzeitig zulässige Zonen-Kombinationen" UIHint="Headline" />
@@ -464,8 +480,7 @@
                       <ParameterSeparator Id="%AID%_PS-nnn" Cell="13,12" Text="-" />
                     </when>
                   </choose>
-
-                </ParameterBlock>
+                </ParameterBlock>              
               </ParameterBlock>
               
               
@@ -485,16 +500,7 @@
               </ParameterBlock>
               <op:include href="Irrigation.templ.xml" xpath="//ApplicationProgram/Dynamic/ChannelIndependentBlock/ParameterBlock[@Name='Channel']/*" type="template" prefix="IRR" IsInner="true" />
             
-                          <!-- globale KOs -->
-              <ComObjectRefRef RefId="%AID%_O-%TT%00100_R-%TT%0010001" />              <!-- ET0 -->
-              <ComObjectRefRef RefId="%AID%_O-%TT%00101_R-%TT%0010101" />              <!-- Temperatur -->
-              <ComObjectRefRef RefId="%AID%_O-%TT%00103_R-%TT%0010301" />              <!-- GlobaleSperre -->
-              <ComObjectRefRef RefId="%AID%_O-%TT%00104_R-%TT%0010401" />              <!-- TDurchschnittHeute -->
-              <ComObjectRefRef RefId="%AID%_O-%TT%00105_R-%TT%0010501" />              <!-- TDurchschnittGestern -->
-              <ComObjectRefRef RefId="%AID%_O-%TT%00106_R-%TT%0010601" />              <!-- TMaxHeute -->
-              <ComObjectRefRef RefId="%AID%_O-%TT%00107_R-%TT%0010701" />              <!-- TMinHeute -->
-              <ComObjectRefRef RefId="%AID%_O-%TT%00108_R-%TT%0010801" />              <!-- TMaxGestern -->
-              <ComObjectRefRef RefId="%AID%_O-%TT%00109_R-%TT%0010901" />              <!-- TMinGestern -->
+
             </Channel>
           </Dynamic>
         </ApplicationProgram>

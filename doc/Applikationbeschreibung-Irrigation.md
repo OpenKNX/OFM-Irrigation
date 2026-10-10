@@ -74,15 +74,15 @@ Diagnose-Ausgänge zur Nachvollziehbarkeit der Tagesaggregation. "Heute" zeigt d
 
 Parameter, Eingänge und Ausgänge einer einzelnen Bewässerungszone. Die zonenweiten Wetterdaten (Temperatur, Regenmenge, ET0) werden zentral auf der Seite "Allgemein" gepflegt – hier werden nur die Werte eingestellt, die diese eine Zone von anderen unterscheiden.
 <!-- DOC -->
-#### Niederschlagsrate der Zone [mm/h]
+#### Niederschlagsrate der Zone
 
 Hydraulische Ausbringrate der eingesetzten Bewässerungstechnik dieser Zone in mm/h (z. B. Sprinklerdüsen, Tropfrohr). Kein pflanzenbezogener Wert, sondern abhängig von der verbauten Hardware. Bestimmt zusammen mit der berechneten Fehlmenge die Ventil-Laufzeit.
 <!-- DOC -->
-#### Bewässerungsschwelle [%]
+#### Bewässerungsschwelle
 
 Anteil der nutzbaren Feldkapazität (nFK) in Prozent, der aufgebraucht sein darf, bevor eine Bewässerung ausgelöst wird (Bewässerung startet, wenn das Bodenwasserkonto unter diesen Schwellwert fällt). In der Bewässerungswissenschaft als "p" bzw. "depletion fraction" bezeichnet. 50 % ist ein gängiger Startwert.
 <!-- DOC -->
-#### Nutzbare Feldkapazität (nFK) [mm]
+#### Nutzbare Feldkapazität (nFK)
 
 Wassermenge in mm, die der Boden dieser Zone in der durchwurzelten Schicht pflanzenverfügbar speichern kann (nFK = Feldkapazität − permanenter Welkepunkt). Bestimmt die Obergrenze des Bodenwasserkontos dieser Zone.
 <!-- DOC -->

@@ -36,22 +36,22 @@
                 <Parameter Id="%AID%_UP-%TT%%CC%003" Name="Ch%C%Active"          ParameterType="%AID%_PT-IRRChannelActive" Text="Kanalaktivität"  Offset="0" BitOffset="0"   Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%014" Name="Ch%C%Suspended"      ParameterType="%AID%_PT-Suspended" Text="Suspendiert" Offset="0" BitOffset="1" Value="0" />
                 <!-- 4x 1 Bit -->
-                <Parameter Id="%AID%_UP-%TT%%CC%004" Name="CH%C%NiederschlagsrateViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="Niederschlagsrate über KO vorgeben?" Offset="0" BitOffset="2" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%004" Name="CH%C%NiederschlagsrateViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="über KO vorgeben?" Offset="0" BitOffset="2" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%006" Name="CH%C%SchwellwertViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="Schwellwert über KO vorgeben?" Offset="0" BitOffset="3" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%008" Name="CH%C%nFKViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="nFK über KO vorgeben?" Offset="0" BitOffset="4" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%010" Name="CH%C%KcViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="Kc über KO vorgeben?" Offset="0" BitOffset="5" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%008" Name="CH%C%nFKViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="über KO vorgeben?" Offset="0" BitOffset="4" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%010" Name="CH%C%KcViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="über KO vorgeben?" Offset="0" BitOffset="5" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%012" Name="Ch%C%BodenfeuchteVerwendung"  ParameterType="%AID%_PT-IRRBodenfeuchteVerwendung" Text="Verwendung Bodenfeuchtesensor"  Offset="0" BitOffset="6" Value="0" />
 
                 <!-- Byte 1: Niederschlagsrate -->  
-                <Parameter Id="%AID%_UP-%TT%%CC%005" Name="CH%C%NiederschlagsrateValue" ParameterType="%AID%_PT-IRRNiederschlagsrate" Text="Niederschlagsrate der Zone [mm/h]" Offset="1" BitOffset="0" Value="10" />
+                <Parameter Id="%AID%_UP-%TT%%CC%005" Name="CH%C%NiederschlagsrateValue" ParameterType="%AID%_PT-IRRNiederschlagsrate" Text="Niederschlagsrate der Zone" Offset="1" BitOffset="0" Value="10" />
                 <!-- Byte 2: SchwellwertValue -->  
-                <Parameter Id="%AID%_UP-%TT%%CC%007" Name="CH%C%SchwellwertValue" ParameterType="%AID%_PT-IRRSchwellwert" Text="Bewässerungsschwelle [%]" Offset="2" BitOffset="0" Value="50" />
+                <Parameter Id="%AID%_UP-%TT%%CC%007" Name="CH%C%SchwellwertValue" ParameterType="%AID%_PT-IRRSchwellwert" Text="Bewässerungsschwelle" Offset="2" BitOffset="0" Value="50" />
                 <!-- Byte 3: Nutzbare Feldkapazität -->  
-                <Parameter Id="%AID%_UP-%TT%%CC%009" Name="CH%C%nFKValue" ParameterType="%AID%_PT-IRRnFK" Text="Nutzbare Feldkapazität (nFK) [mm]" Offset="3" BitOffset="0" Value="250" />
+                <Parameter Id="%AID%_UP-%TT%%CC%009" Name="CH%C%nFKValue" ParameterType="%AID%_PT-IRRnFK" Text="Nutzbare Feldkapazität (nFK)" Offset="3" BitOffset="0" Value="250" />
                 <!-- Byte 4: Kc-Faktor -->  
                 <Parameter Id="%AID%_UP-%TT%%CC%011" Name="CH%C%KcValue" ParameterType="%AID%_PT-IRRKc" Text="Kc-Faktor der Zone" Offset="4" BitOffset="0" Value="80" />
                 <!-- Byte 5: Sperrschwelle Bodenfeuchte -->
-                <Parameter Id="%AID%_UP-%TT%%CC%013" Name="Ch%C%SperrschwelleBodenfeuchte" ParameterType="%AID%_PT-IRRSchwellwert" Text="Sperrschwelle Bodenfeuchte [%]" Offset="5" BitOffset="0" Value="80" />
+                <Parameter Id="%AID%_UP-%TT%%CC%013" Name="Ch%C%SperrschwelleBodenfeuchte" ParameterType="%AID%_PT-IRRSchwellwert" Text="Sperrschwelle Bodenfeuchte" Offset="5" BitOffset="0" Value="80" />
               </Union>
             </Parameters>
 
@@ -68,7 +68,7 @@
               <ParameterRef Id="%AID%_UP-%TT%%CC%008_R-%TT%%CC%00801" RefId="%AID%_UP-%TT%%CC%008" /> <!-- nFKValue via KO -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%009_R-%TT%%CC%00901" RefId="%AID%_UP-%TT%%CC%009" SuffixText="mm" /> <!-- nFKValue -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001" RefId="%AID%_UP-%TT%%CC%010" /> <!-- KcValue via KO  -->
-              <ParameterRef Id="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_UP-%TT%%CC%011" SuffixText="/ 10" /> <!-- KcValue -->
+              <ParameterRef Id="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_UP-%TT%%CC%011" SuffixText="*0,1" /> <!-- KcValue -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%012_R-%TT%%CC%01201" RefId="%AID%_UP-%TT%%CC%012" /> <!-- BodenfeuchteVerwendung -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%013_R-%TT%%CC%01301" RefId="%AID%_UP-%TT%%CC%013" SuffixText="%" /> <!-- Sperrschwelle Bodenfeuchte -->
             </ParameterRefs>
@@ -139,8 +139,8 @@
               <ParameterBlock Id="%AID%_PB-nnn" Name="Channel" HelpContext="%DOC%">
                 <choose ParamRefId="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301">
                   <when test="=1">
-                    <ParameterBlock Id="%AID%_PB-nnn" Name="Channel%C%Page" Text="Bewässerungszone %C%: {{0: ...}}" TextParameterRefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" Icon="sprinkler" HelpContext="IRR-Bewaesserungszone" ShowInComObjectTree="true">
-                      <ParameterSeparator Id="%AID%_PS-nnn" Text="Kanaldefinition" UIHint="Headline" />
+                    <ParameterBlock Id="%AID%_PB-nnn" Name="Channel%C%Page" Text="Zone %C%: {{0: ...}}" TextParameterRefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" Icon="sprinkler" HelpContext="IRR-Bewaesserungszone" ShowInComObjectTree="true">
+                      <ParameterSeparator Id="%AID%_PS-nnn" Text="Bewässerungszone" UIHint="Headline" />
                       <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" IndentLevel="1" HelpContext="BASE-ChannelName" />
                       <ParameterRefRef RefId="%AID%_UP-%TT%%CC%014_R-%TT%%CC%01401" IndentLevel="1" HelpContext="BASE-ChannelSuspended" />
 

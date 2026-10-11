@@ -1,0 +1,17 @@
+
+on: [push]
+
+jobs:
+  ofm-check-job:
+    name: Check OFM
+
+    uses: openknx/actions/.github/workflows/openknx-ofm-check.yml@v0
+    with:
+      # ofm: ${{ github.event.repository.name }}
+      # ofm_ref: ${{ github.ref_name }}
+      ofm_prefix: IRR
+      oam: BEM-GardenControl
+      # oam_ref: v1dev
+      # knxprod_xml: GardenControl
+      target: ""
+      KNXPROD_PREFIX: GardenControl

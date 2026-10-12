@@ -456,6 +456,7 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
     if (start == ende)
     {
         // Fenster der Laenge 0: nie aktiv
+        logDebugP("Bewaesserungsfenster deaktiviert (Startzeit = Endzeit)");
     }
     else if (start < ende)
     {
@@ -464,6 +465,7 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
         {
             imFenster = true;
             restMinuten = ende - jetzt;
+            logDebugP("Bewaesserungsfenster aktiv, Restminuten=%d", restMinuten);
         }
     }
     else
@@ -474,6 +476,7 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
             // Abendteil: bis Mitternacht + Zeit von Mitternacht bis Ende
             imFenster = true;
             restMinuten = (MINUTEN_PRO_TAG - jetzt) + ende;
+            logDebugP("Bewaesserungsfenster aktiv, Restminuten=%d", restMinuten);
         }
         else if (jetzt < ende)
         {

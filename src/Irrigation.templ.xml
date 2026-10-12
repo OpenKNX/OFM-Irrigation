@@ -17,7 +17,7 @@
           <Static>
             <Parameters>
                <!-- Kanalname und -nummer (kein Speicher nötig) -->
-              <Parameter Id="%AID%_P-%TT%%CC%001" Name="Ch%C%Name" ParameterType="%AID%_PT-Text40Byte" Text="Beschreibung der Zone" Value="" />
+              <Parameter Id="%AID%_P-%TT%%CC%001" Name="Ch%C%Name" ParameterType="%AID%_PT-Text40Byte" Text="Beschreibung" Value="" /> <!--Beschreibung der Zone-->
               
             
               <!-- Memory Layout
@@ -37,7 +37,7 @@
                 <Parameter Id="%AID%_UP-%TT%%CC%014" Name="Ch%C%Suspended"      ParameterType="%AID%_PT-Suspended" Text="Suspendiert" Offset="0" BitOffset="1" Value="0" />
                 <!-- 4x 1 Bit -->
                 <Parameter Id="%AID%_UP-%TT%%CC%004" Name="CH%C%NiederschlagsrateViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="über KO vorgeben?" Offset="0" BitOffset="2" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%006" Name="CH%C%SchwellwertViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="Schwellwert über KO vorgeben?" Offset="0" BitOffset="3" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%006" Name="CH%C%SchwellwertViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="über KO vorgeben?" Offset="0" BitOffset="3" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%008" Name="CH%C%nFKViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="über KO vorgeben?" Offset="0" BitOffset="4" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%010" Name="CH%C%KcViaKO" ParameterType="%AID%_PT-OnOffYesNo" Text="über KO vorgeben?" Offset="0" BitOffset="5" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%012" Name="Ch%C%BodenfeuchteVerwendung"  ParameterType="%AID%_PT-IRRBodenfeuchteVerwendung" Text="Verwendung Bodenfeuchtesensor"  Offset="0" BitOffset="6" Value="0" />
@@ -148,7 +148,7 @@
                         <ParameterSeparator Id="%AID%_PS-nnn" Text="Zonenparameter" UIHint="Headline" />
 
                         <ParameterRefRef RefId="%AID%_UP-%TT%%CC%005_R-%TT%%CC%00501" IndentLevel="1" HelpContext="%DOC%" />
-                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401" IndentLevel="1" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401" IndentLevel="2" />
                         <ParameterSeparator Id="%AID%_PS-nnn" Text="Praxistipp: MP Rotator Standard = 10 mm/h, MP800 = 20 mm/h, Tropfer und Beete mit 20mm/h beginnen" /> 
                         <choose ParamRefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401">
                           <when test="=1">
@@ -157,7 +157,7 @@
                         </choose>
 
                         <ParameterRefRef RefId="%AID%_UP-%TT%%CC%007_R-%TT%%CC%00701" IndentLevel="1" HelpContext="%DOC%" />
-                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%006_R-%TT%%CC%00601" IndentLevel="1" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%006_R-%TT%%CC%00601" IndentLevel="2" />
                         <choose ParamRefId="%AID%_UP-%TT%%CC%006_R-%TT%%CC%00601">
                           <when test="=1">
                             <ComObjectRefRef RefId="%AID%_O-%TT%%CC%011_R-%TT%%CC%01101" />                    <!-- Schwellwert -->
@@ -165,7 +165,7 @@
                         </choose>
 
                         <ParameterRefRef RefId="%AID%_UP-%TT%%CC%009_R-%TT%%CC%00901" IndentLevel="1" HelpContext="%DOC%" />
-                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%008_R-%TT%%CC%00801" IndentLevel="1" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%008_R-%TT%%CC%00801" IndentLevel="2" />
                         <choose ParamRefId="%AID%_UP-%TT%%CC%008_R-%TT%%CC%00801">
                           <when test="=1">
                             <ComObjectRefRef RefId="%AID%_O-%TT%%CC%012_R-%TT%%CC%01201" />                    <!-- nFK -->
@@ -173,7 +173,7 @@
                         </choose>
 
                         <ParameterRefRef RefId="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" IndentLevel="1" HelpContext="%DOC%" />
-                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001" IndentLevel="1" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001" IndentLevel="2" />
                         <choose ParamRefId="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001">
                           <when test="=1">
                             <ComObjectRefRef RefId="%AID%_O-%TT%%CC%013_R-%TT%%CC%01301" />                    <!-- Kc -->

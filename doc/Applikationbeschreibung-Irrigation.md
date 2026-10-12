@@ -146,9 +146,15 @@ Wie der Wert verwendet wird, legt der ETS-Parameter fest:
 *Zusätzliche Sicherheitsbedingung* --> Das Modell bleibt führend. Der Sensor kann eine Bewässerung nur verhindern.
 
 <!-- DOC -->
-#### Bewässerungsfenster Startstunde
+#### Bewässerungsfenster Start
 
-Stunde (0 bis 23), ab der die Bewässerung beginnen darf. Zusammen mit der **Startminute** ergibt sich die Startzeit des Bewässerungsfensters.
+*Startstunde*
+Stunde (0 bis 23), ab der die Bewässerung beginnen darf. Zusammen mit der *Startminute* ergibt sich die Startzeit des Bewässerungsfensters.
+
+*Startminute*
+Minute (0 bis 59) der Startzeit. Zusammen mit der *Startstunde* legt sie fest, wann das Bewässerungsfenster beginnt.
+Beispiel: Startstunde 5 und Startminute 30 ergeben die Startzeit 05:30 Uhr.
+
 
 Zum Start prüft das Modul, welche Zonen Bedarf haben, und startet sie nacheinander. Zonen, die laut Kompatibilitätsmatrix nicht gleichzeitig laufen dürfen, warten, bis die laufende Zone fertig ist.
 
@@ -160,37 +166,31 @@ Das Fenster öffnet einmal pro Durchlauf. Sind alle Zonen früher fertig, bleibt
 - Liegt die Startzeit nach der Endzeit, gilt das Fenster über Mitternacht (z. B. 22:00 bis 06:00).
 - Sind Startzeit und Endzeit identisch, ist das Fenster leer und es wird nie bewässert.
 
-<!-- DOC -->
-#### Bewässerungsfenster Startminute
-
-Minute (0 bis 59) der Startzeit. Zusammen mit der **Startstunde** legt sie fest, wann das Bewässerungsfenster beginnt.
-
-Beispiel: Startstunde 5 und Startminute 30 ergeben die Startzeit 05:30 Uhr.
-
 
 <!-- DOC -->
-#### Bewässerungsfenster Endstunde
+#### Bewässerungsfenster Ende
 
-Stunde (0 bis 23), zu der das Bewässerungsfenster endet. Zusammen mit der **Endminute** ergibt sich die Endzeit.
+*Endstunde*
+Stunde (0 bis 23), zu der das Bewässerungsfenster endet. Zusammen mit der *Endminute* ergibt sich die Endzeit.
+
+*Endminute*
+Minute (0 bis 59) der Endzeit. Zusammen mit der *Endstunde* legt sie fest, wann das Bewässerungsfenster endet.
+Beispiel: Endstunde 6 und Endminute 0 ergeben die Endzeit 06:00 Uhr. 
+
 
 Das Ende ist eine feste Grenze:
-
-- Es werden keine neuen Zonen mehr gestartet, wenn nur noch sehr wenig Zeit bleibt (weniger als 2 Minuten).
+- Es werden keine neuen Zonen mehr gestartet, wenn nur noch sehr wenig Zeit bleibt (weniger als 10 Minuten).
 - Passt die berechnete Laufzeit einer Zone nicht mehr komplett in das Fenster, wird sie auf die verbleibende Zeit gekürzt.
 - Zonen, die nicht mehr bedient werden konnten, werden verworfen. Ihr Bedarf wird am nächsten Tag über das Wasserbilanzkonto neu berechnet.
-
+  Beispiel:
+- Eine Zone, die um 05:49 Uhr startet und länger als 10 Minuten benötigt, wird auf 11 Minuten gekürzt.
+- Eine Zone, die um 05:55 Uhr starten möchte und eine berechnete Laufzeit von 30 Minuten hat, wird für diesen Tag verworfen. 
 
 **Hinweise**
 
 - Liegt die Endzeit vor der Startzeit, endet das Fenster am Folgetag (z. B. Start 22:00, Ende 06:00).
 - Da in ganzen Minuten gerechnet wird, kann eine Zone bis zu einer Minute über die Endzeit hinaus laufen.
 
-<!-- DOC -->
-#### Bewässerungsfenster Endminute
-
-Minute (0 bis 59) der Endzeit. Zusammen mit der **Endstunde** legt sie fest, wann das Bewässerungsfenster endet.
-
-Beispiel: Endstunde 7 und Endminute 0 ergeben die Endzeit 07:00 Uhr. Eine Zone, die um 06:50 Uhr startet und länger als 10 Minuten benötigt, wird auf 10 Minuten gekürzt.
 
 **Empfehlung**
 

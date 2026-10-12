@@ -12,7 +12,7 @@
           <Static>
             <ParameterTypes>
               <ParameterType Id="%AID%_PT-IRRChannelActive" Name="ChannelActive">
-                <TypeRestriction Base="Value" SizeInBit="1" UIHint="DropDown">
+                <TypeRestriction Base="Value" SizeInBit="1">
                   <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" />
                   <Enumeration Text="Aktiviert" Value="1" Id="%ENID%" />
                 </TypeRestriction>
@@ -243,10 +243,10 @@
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Zeitfenster" UIHint="Headline" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00020_R-%TT%0002001" HelpContext="%DOC%" IndentLevel="1" /> <!-- StartzeitStunde -->
-                <ParameterRefRef RefId="%AID%_UP-%TT%00021_R-%TT%0002101" HelpContext="%DOC%" IndentLevel="1" /> <!-- StartzeitMinute -->
-                <ParameterRefRef RefId="%AID%_UP-%TT%00022_R-%TT%0002201" HelpContext="%DOC%" IndentLevel="1" /> <!-- EndzeitStunde -->
-                <ParameterRefRef RefId="%AID%_UP-%TT%00023_R-%TT%0002301" HelpContext="%DOC%" IndentLevel="1" /> <!-- EndzeitMinute -->
+                <ParameterRefRef RefId="%AID%_UP-%TT%00020_R-%TT%0002001" HelpContext="IRR-Bewaesserungsfenster-Start" IndentLevel="1" /> <!-- StartzeitStunde -->
+                <ParameterRefRef RefId="%AID%_UP-%TT%00021_R-%TT%0002101" HelpContext="IRR-Bewaesserungsfenster-Start" IndentLevel="1" /> <!-- StartzeitMinute -->
+                <ParameterRefRef RefId="%AID%_UP-%TT%00022_R-%TT%0002201" HelpContext="IRR-Bewaesserungsfenster-Ende" IndentLevel="1" /> <!-- EndzeitStunde -->
+                <ParameterRefRef RefId="%AID%_UP-%TT%00023_R-%TT%0002301" HelpContext="IRR-Bewaesserungsfenster-Ende" IndentLevel="1" /> <!-- EndzeitMinute -->
                 
 
                 <!-- globale KOs -->

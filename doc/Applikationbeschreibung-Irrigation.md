@@ -149,9 +149,11 @@ Wie der Wert verwendet wird, legt der ETS-Parameter fest:
 #### Bewässerungsfenster Start
 
 *Startstunde*
+
 Stunde (0 bis 23), ab der die Bewässerung beginnen darf. Zusammen mit der *Startminute* ergibt sich die Startzeit des Bewässerungsfensters.
 
 *Startminute*
+
 Minute (0 bis 59) der Startzeit. Zusammen mit der *Startstunde* legt sie fest, wann das Bewässerungsfenster beginnt.
 Beispiel: Startstunde 5 und Startminute 30 ergeben die Startzeit 05:30 Uhr.
 
@@ -171,9 +173,11 @@ Das Fenster öffnet einmal pro Durchlauf. Sind alle Zonen früher fertig, bleibt
 #### Bewässerungsfenster Ende
 
 *Endstunde*
+
 Stunde (0 bis 23), zu der das Bewässerungsfenster endet. Zusammen mit der *Endminute* ergibt sich die Endzeit.
 
 *Endminute*
+
 Minute (0 bis 59) der Endzeit. Zusammen mit der *Endstunde* legt sie fest, wann das Bewässerungsfenster endet.
 Beispiel: Endstunde 6 und Endminute 0 ergeben die Endzeit 06:00 Uhr. 
 

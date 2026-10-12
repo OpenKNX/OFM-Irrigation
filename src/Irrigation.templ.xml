@@ -18,6 +18,7 @@
             <Parameters>
                <!-- Kanalname und -nummer (kein Speicher nötig) -->
               <Parameter Id="%AID%_P-%TT%%CC%001" Name="Ch%C%Name" ParameterType="%AID%_PT-Text40Byte" Text="Beschreibung" Value="" /> <!--Beschreibung der Zone-->
+              <Parameter Id="%AID%_P-%TT%%CC%999" Name="Ch%C%NameDisplay" ParameterType="%AID%_PT-Text45Byte" Text="Beschreibung (Anzeige)" Value="" Access="Read" op:configTransfer="never" />
               
             
               <!-- Memory Layout
@@ -71,9 +72,23 @@
               <ParameterRef Id="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_UP-%TT%%CC%011" SuffixText="*0,1" /> <!-- KcValue -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%012_R-%TT%%CC%01201" RefId="%AID%_UP-%TT%%CC%012" /> <!-- BodenfeuchteVerwendung -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%013_R-%TT%%CC%01301" RefId="%AID%_UP-%TT%%CC%013" SuffixText="%" /> <!-- Sperrschwelle Bodenfeuchte -->
+            
+              <ParameterRef Id="%AID%_P-%TT%%CC%999_R-%TT%%CC%99901" RefId="%AID%_P-%TT%%CC%999" />
             </ParameterRefs>
 
-          
+            <!-- Darstellung wenn Kanal auf Suspend steht -->
+            <ParameterCalculations>
+              <ParameterCalculation Id="%AID%_PC-%TT%%CC%0111" Language="JavaScript" Name="MarkInactive%CC%" LRTransformationFunc="BASE_MarkInactiveChannel" LRTransformationParameters="{&quot;InactiveValue&quot;:1}" RLTransformationFunc="BASE_Nop">
+                <LParameters>
+                    <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" AliasName="TextInput" />
+                    <ParameterRefRef RefId="%AID%_UP-%TT%%CC%014_R-%TT%%CC%01401" AliasName="InactiveControl" />  
+                </LParameters>
+                <RParameters>
+                  <ParameterRefRef RefId="%AID%_P-%TT%%CC%999_R-%TT%%CC%99901" AliasName="TextOutput" />
+                </RParameters>
+              </ParameterCalculation>
+            </ParameterCalculations>
+
             <ComObjectTable>
 
               <!-- "lokale" KOs je Zone-->
@@ -139,7 +154,7 @@
               <ParameterBlock Id="%AID%_PB-nnn" Name="Channel" HelpContext="%DOC%">
                 <choose ParamRefId="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301">
                   <when test="=1">
-                    <ParameterBlock Id="%AID%_PB-nnn" Name="Channel%C%Page" Text="Zone %C%: {{0: ...}}" TextParameterRefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" Icon="sprinkler" HelpContext="IRR-Bewaesserungszone" ShowInComObjectTree="true">
+                    <ParameterBlock Id="%AID%_PB-nnn" Name="Channel%C%Page" Text="Zone %C%: {{0: ...}}" TextParameterRefId="%AID%_P-%TT%%CC%999_R-%TT%%CC%99901" Icon="sprinkler" HelpContext="IRR-Bewaesserungszone" ShowInComObjectTree="true">
                       <ParameterSeparator Id="%AID%_PS-nnn" Text="Bewässerungszone" UIHint="Headline" />
                       <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" IndentLevel="1" HelpContext="BASE-ChannelName" />
                       <ParameterRefRef RefId="%AID%_UP-%TT%%CC%014_R-%TT%%CC%01401" IndentLevel="1" HelpContext="BASE-ChannelSuspended" />

@@ -25,7 +25,7 @@ private:
     bool _Bewaesserungsbedarf = false;
     float _ermittelteFehlmenge_mm = 0.0;
     uint16_t _ermittelteLaufzeit_sekunden = 0;
-
+    bool _kontoWiederhergestellt = false;
 
 
     enum class ZonenStatus : uint8_t

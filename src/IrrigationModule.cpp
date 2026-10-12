@@ -37,6 +37,10 @@ void IrrigationModule::loop()
     if (openknx.time.isValid())
     {
         const uint16_t heute = getYearDay();
+        
+        check_for_restored_values(heute); // Zeit gültig - prüfe ob was aus dem Flash wiederhergestellt werden soll
+
+        
         if (_letzterBekannterTag == -1)
             _letzterBekannterTag = heute;
         else if (heute != _letzterBekannterTag)
@@ -204,30 +208,33 @@ void IrrigationModule::readFlash(const uint8_t* data, const uint16_t size)
         return;
     }
     logIndentUp();
-    uint16_t restoredcurrentYday = openknx.flash.readInt();
-    float restoredTemperatur_max_heute = openknx.flash.readFloat();
-    float restoredTemperatur_min_heute = openknx.flash.readFloat();
+    _restoredcurrentYday = openknx.flash.readInt();
+    _restoredTemperatur_max_heute = openknx.flash.readFloat();
+    _restoredTemperatur_min_heute = openknx.flash.readFloat();
     _gueltigeWerte_heute = openknx.flash.readByte();  
     _Temperatur_max_gestern = openknx.flash.readFloat();
     _Temperatur_min_gestern = openknx.flash.readFloat();
     _Temperatur_Durchschnitt_gestern = openknx.flash.readFloat();
     _Regenmenge_gestern = openknx.flash.readFloat();
 
+    
+
     // heutige gespeicherte Werte nur übernehmen, wenn sie tatsächlich von HEUTE sind
-    if (openknx.time.isValid() && (uint32_t)getYearDay() == restoredcurrentYday)
+    // das ist schwierig, denn die Uhrzeit kann beim Booten noch nicht gültig sein
+    // daher warten wir bis es eine gültige Uhrzeit gibt im loop
+    // wenn aber eh keine gueltigen werte vorlagen, dann gleich verwerfen
+    if (_gueltigeWerte_heute == false || _restoredcurrentYday == 0)
     {
-        _Temperatur_max_heute = restoredTemperatur_max_heute;
-        _Temperatur_min_heute = restoredTemperatur_min_heute;
-        _Temperatur_Durchschnitt_heute = (_Temperatur_max_heute + _Temperatur_min_heute) / 2;
-        _gueltigeWerte_heute = true;
+        logDebugP("read: keine gültigen Werte für heute, verwerfe");
+        _Temperatur_max_heute = -42;
+        _Temperatur_min_heute = 42;
     }
     else
     {
-        // Zeit noch nicht gültig ODER Tag hat sich seit dem letzten Speichern geändert. lieber frisch beginnen, stattveraltete/falsche Werte weiterzuschleppen.
-        _Temperatur_max_heute = -42;
-        _Temperatur_min_heute = 42;
-        _gueltigeWerte_heute = false;
+        logDebugP("read: gespeicherte Werte für heute vorhanden, warten auf gültige Zeit im loop");
+        _restoreAusstehend = true; 
     }
+
 
 
     // jeder Kanal-Slot wird IMMER gelesen 
@@ -452,6 +459,7 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
 
     bool imFenster = false;
     uint16_t restMinuten = 0;
+    static uint16_t restMinuten_temp = 0; // fuer Debug-Ausgabe nur bei Änderung (jede Minute)
 
     if (start == ende)
     {
@@ -465,7 +473,13 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
         {
             imFenster = true;
             restMinuten = ende - jetzt;
-            logDebugP("Bewaesserungsfenster aktiv, Restminuten=%d", restMinuten);
+
+            // Ausgabe nur bei Änderung:
+            if (restMinuten != restMinuten_temp)
+            {
+                restMinuten_temp = restMinuten;
+                logDebugP("Bewaesserungsfenster aktiv, Restminuten=%d", restMinuten);
+            }
         }
     }
     else
@@ -476,13 +490,24 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
             // Abendteil: bis Mitternacht + Zeit von Mitternacht bis Ende
             imFenster = true;
             restMinuten = (MINUTEN_PRO_TAG - jetzt) + ende;
-            logDebugP("Bewaesserungsfenster aktiv, Restminuten=%d", restMinuten);
+            // Ausgabe nur bei Änderung:
+            if (restMinuten != restMinuten_temp)
+            {
+                restMinuten_temp = restMinuten;
+                logDebugP("Bewaesserungsfenster aktiv, Restminuten=%d", restMinuten);
+            }
         }
         else if (jetzt < ende)
         {
             // Morgenteil: nur noch bis Ende
             imFenster = true;
             restMinuten = ende - jetzt;
+            // Ausgabe nur bei Änderung:
+            if (restMinuten != restMinuten_temp)
+            {
+                restMinuten_temp = restMinuten;
+                logDebugP("Bewaesserungsfenster aktiv, Restminuten=%d", restMinuten);
+            }
         }
     }
 
@@ -621,4 +646,32 @@ void IrrigationModule::koordiniereZonenstart(uint16_t restMinuten)
         else
             logInfoP("Bewaesserungsfenster beendet - alle Zonen abgearbeitet");
     }
+}
+
+void IrrigationModule::check_for_restored_values(uint16_t currentYday)
+{
+    if (_restoreAusstehend == true)
+    {
+        if (currentYday == _restoredcurrentYday)
+        {
+            _Temperatur_max_heute = _restoredTemperatur_max_heute;
+            _Temperatur_min_heute = _restoredTemperatur_min_heute;
+            _Temperatur_Durchschnitt_heute = (_Temperatur_max_heute + _Temperatur_min_heute) / 2;
+            _gueltigeWerte_heute = true;
+        }
+        else
+        {
+            // Zeit noch nicht gültig ODER Tag hat sich seit dem letzten Speichern geändert. lieber frisch beginnen, stattveraltete/falsche Werte weiterzuschleppen.
+            _Temperatur_max_heute = -42;
+            _Temperatur_min_heute = 42;
+            _gueltigeWerte_heute = false;
+        }
+
+        _restoreAusstehend = false;
+        logDebugP("restore der Werte aus Flash");
+    }
+    else
+    {
+        return; // restore wurde bereits durchgeführt
+    }    
 }

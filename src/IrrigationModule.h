@@ -29,13 +29,10 @@ class IrrigationModule : public OpenKNX::Module
     void writeFlash() override;
     void readFlash(const uint8_t *iBuffer, const uint16_t iSize) override;
     
-
-
-
   private:
     IrrigationChannel *_channels[IRR_ChannelCount] = {}; // init mit // channel[0] = nullptr, // channel[1] = nullptr, usw
     uint8_t _numChannels = 0;
-    bool _Sperre_Global = false;
+    bool _Sperre_Global = false; // erstmal alles freigegeben
 
     float _ET0_gestern;
 
@@ -73,6 +70,12 @@ class IrrigationModule : public OpenKNX::Module
     bool _fensterBereitsGestartet = false; // verhindert Mehrfachstart innerhalb desselben Fensters
 
     bool _berechnungAusstehend = false;
+    bool _restoreAusstehend = false; // true = es gibt Werte aus dem Flash die nur mit gültiger Zeit abgerufen werden können
+    
+
+    float _restoredTemperatur_max_heute = -42.0;
+    float _restoredTemperatur_min_heute = 42.0;
+    uint16_t _restoredcurrentYday = 0;
 
     bool sindKompatibel(uint8_t zoneA, uint8_t zoneB);
     void pruefeUndStarteBewaesserungsfenster(void);
@@ -88,6 +91,7 @@ class IrrigationModule : public OpenKNX::Module
     void calculateEt0(uint16_t TagdesJahres);
     float calc_ET0(float T_mean, float T_max, float T_min, float Ra_mm);
     bool get_globaleSperre();
+    void check_for_restored_values(uint16_t currentYday);
 
     static const uint8_t _magicWord[IRR_FLASH_MAGIC_WORD_LEN];
 };

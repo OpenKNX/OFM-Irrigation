@@ -38,12 +38,9 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
         return;
     }
 
-    
-    logDebugP("[channel]processInputKo: channel %u", _channelIndex);
-  
-
     int32_t idx = IRR_KoCalcIndex(iKo.asap());
     if (idx < 0) return; // KO gehoert zu einem anderen Kanal oder Modul
+    logDebugP("[channel]processInputKo: channel %u", _channelIndex);
     logIndentUp();
     switch (idx)
     {
@@ -73,7 +70,7 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
         }
         case IRR_KoChZonenSperre:
         {
-            _Sperre_Zone = KoIRR_ChZonenSperre.value(DPT_Enable);
+            _Sperre_Zone = KoIRR_ChZonenSperre.value(DPT_Switch);
             logDebugP("processInputKo: Zonensperre=%u", _Sperre_Zone);
             break;
         }
@@ -119,10 +116,15 @@ void IrrigationChannel::loop()
         //Timeout abhandeln
         if (((uint32_t)(millis() - _rueckmeldungStartMillis)/1000) >= _ventil_Rueckmeldung_timeout_s)
         {
-            //nocchmal zur Sicherheit abschalten 
+            //nochmal zur Sicherheit abschalten 
             KoIRR_ChVentilansteuerung.value(false, DPT_Switch);
             setZonenStatus(ZonenStatus::TimeoutFehler);
             logDebugP( "Kanal %u: Timeout Ventil-Rueckmeldung", _channelIndex);
+
+            // wir gehen von aus, dass Wasser geflossen ist, daher Bodenwasserkonto anpassen
+            const float Wassermenge_mm = calc_Zugefuehrte_Wassermenge((float)_ermittelteLaufzeit_sekunden, _Niederschlagsrate_Zone);
+            _Wasserbilanzkonto = calc_Bodenwasserkonto_final(_Wasserbilanzkonto, Wassermenge_mm, _nutzbareFeldkapazitaet_nFK_Zone);
+            KoIRR_ChWasserbilanzkonto.value(_Wasserbilanzkonto, DPT_Value_Temp);
         }
     }
 
@@ -141,7 +143,15 @@ void IrrigationChannel::setup()
     _Schwellwert_P_Prozent_Zone = ParamIRR_CHSchwellwertValue;
     _nutzbareFeldkapazitaet_nFK_Zone = ParamIRR_CHnFKValue;
     _Kulturfaktor_Kc_Zone = ParamIRR_CHKcValue / 10.0f;
-    _Wasserbilanzkonto = _nutzbareFeldkapazitaet_nFK_Zone; // Start optimistisch: Konto voll
+
+    if (_kontoWiederhergestellt) // falls Flash-Werte wiederhergestellt wurden, dann das Konto ggf. anpassen
+    {
+        _Wasserbilanzkonto = MIN(_Wasserbilanzkonto, _nutzbareFeldkapazitaet_nFK_Zone); // falls nFK verkleinert wurde
+    } 
+    else
+    {    
+        _Wasserbilanzkonto = _nutzbareFeldkapazitaet_nFK_Zone; // Start optimistisch
+    }
     setKOInitialValues(); 
 }
 
@@ -184,7 +194,7 @@ void IrrigationChannel::restore()
     {
         setZonenStatus(restoredStatus);
     }
-
+    _kontoWiederhergestellt = true;
     logDebugP("restored: Wasserbilanzkonto=%f Status=%u", _Wasserbilanzkonto, static_cast<uint8_t>(_ZonenStatus));
 }
 
@@ -411,7 +421,7 @@ void IrrigationChannel::starteBewaesserung(uint16_t maxLaufzeitMinuten)
         return;
     }
 
-     const uint32_t maxLaufzeitSekunden = maxLaufzeitMinuten * 60UL;
+    const uint32_t maxLaufzeitSekunden = maxLaufzeitMinuten * 60UL;
     if (maxLaufzeitSekunden > 0 && _ermittelteLaufzeit_sekunden > maxLaufzeitSekunden)
     {
         logDebugP("Kanal %u: Laufzeit gekuerzt %us -> %us (Fensterende)",
@@ -456,7 +466,7 @@ String IrrigationChannel::wandle_Zonenstatus_in_Text(ZonenStatus status)
 
 void IrrigationChannel::setZonenStatus(ZonenStatus status)
 {
-    if (_ZonenStatus == status) return;
+    if (_ZonenStatus == status) return;// Ausgabe nur wenn es sich ändert
 
     _ZonenStatus = status;
     String statusText = wandle_Zonenstatus_in_Text(_ZonenStatus);

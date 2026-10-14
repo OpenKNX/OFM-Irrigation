@@ -7,3 +7,5 @@ Wie der Wert verwendet wird, legt der ETS-Parameter fest:
 *Bodenwasserkonto korrigieren* --> Der Messwert ersetzt beim Tageswechsel den errechneten Kontostand. 
 *Zusätzliche Sicherheitsbedingung* --> Das Modell bleibt führend. Der Sensor kann eine Bewässerung nur verhindern.
 
+Der Sensor muss mindestens alle 24h einen neuen Wert senden, ansonsten wird dieser ignoriert um im Fehlerfall nicht mit falschen Werten zu rechnen.
+

@@ -39,7 +39,7 @@
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="255" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-IRRKc" Name="IRRKc">
-                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="100" />
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="150" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-IRRStunde" Name="IRRStunde">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="23" />
@@ -210,7 +210,7 @@
               <ComObject Id="%AID%_O-%TT%00100" Name="Berechnung_ET0"            FunctionText="Global Ausgang"  Text="Berechnung ET0 [mm/Tag]"              Number="0" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
               <ComObject Id="%AID%_O-%TT%00101" Name="Temperatur_Wetterstation"     FunctionText="Global Eingang:" Text="Aktuelle Temperatur"               Number="1" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%00102" Name="Regenmenge_Wetterstation"     FunctionText="Global Eingang:" Text="Regenmenge heute"                  Number="2" ObjectSize="4 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-14-0" />
-              <ComObject Id="%AID%_O-%TT%00103" Name="GlobaleSperre" FunctionText="Global Eingang:" Text="Globale Sperre Bewässerung"                       Number="3" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-2" />
+              <ComObject Id="%AID%_O-%TT%00103" Name="GlobaleSperre" FunctionText="Global Eingang:" Text="Globale Sperre Bewässerung"                       Number="3" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Enabled" DatapointType="DPST-1-2" />
               <ComObject Id="%AID%_O-%TT%00104" Name="TDurchschnittHeute" FunctionText="Global Ausgang:" Text="Berechnung Durchschnittstemperatur heute"    Number="4" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%00105" Name="TDurchschnittGestern" FunctionText="Global Ausgang:" Text="Berechnung Durchschnittstemperatur gestern" Number="5" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%00106" Name="TMaxHeute" FunctionText="Global Ausgang:" Text="Berechnung Temperatur max heute"                      Number="6" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
@@ -294,17 +294,17 @@
                   </Rows>
                   <Columns>
                     <Column Id="%AID%_PB-nnn_C-0" Width="20%" />
-                    <Column Id="%AID%_PB-nnn_C-1" Width="10%" />
-                    <Column Id="%AID%_PB-nnn_C-2" Width="10%" />
-                    <Column Id="%AID%_PB-nnn_C-3" Width="10%" />
-                    <Column Id="%AID%_PB-nnn_C-4" Width="10%" />
-                    <Column Id="%AID%_PB-nnn_C-5" Width="10%" />
-                    <Column Id="%AID%_PB-nnn_C-6" Width="10%" />
-                    <Column Id="%AID%_PB-nnn_C-7" Width="10%" />
-                    <Column Id="%AID%_PB-nnn_C-8" Width="10%" />
-                    <Column Id="%AID%_PB-nnn_C-9" Width="10%" />
-                    <Column Id="%AID%_PB-nnn_C-10" Width="10%" />
-                    <Column Id="%AID%_PB-nnn_C-11" Width="10%" />
+                    <Column Id="%AID%_PB-nnn_C-1" Width="8%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="8%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Width="8%" />
+                    <Column Id="%AID%_PB-nnn_C-4" Width="8%" />
+                    <Column Id="%AID%_PB-nnn_C-5" Width="8%" />
+                    <Column Id="%AID%_PB-nnn_C-6" Width="8%" />
+                    <Column Id="%AID%_PB-nnn_C-7" Width="8%" />
+                    <Column Id="%AID%_PB-nnn_C-8" Width="8%" />
+                    <Column Id="%AID%_PB-nnn_C-9" Width="8%" />
+                    <Column Id="%AID%_PB-nnn_C-10" Width="8%" />
+                    <Column Id="%AID%_PB-nnn_C-11" Width="8%" />
                   </Columns>
 
                   <!-- Spaltenköpfe nur für aktivierte Zonen, Anstatt z.B. Zone 1 steht nur 1 da, damit wird die Matrix kompakter -->

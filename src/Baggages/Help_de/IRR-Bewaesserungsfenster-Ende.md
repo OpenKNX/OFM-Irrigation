@@ -1,9 +1,11 @@
 ﻿### Bewässerungsfenster Ende
 
 *Endstunde*
+
 Stunde (0 bis 23), zu der das Bewässerungsfenster endet. Zusammen mit der *Endminute* ergibt sich die Endzeit.
 
 *Endminute*
+
 Minute (0 bis 59) der Endzeit. Zusammen mit der *Endstunde* legt sie fest, wann das Bewässerungsfenster endet.
 Beispiel: Endstunde 6 und Endminute 0 ergeben die Endzeit 06:00 Uhr. 
 

@@ -11,8 +11,9 @@ private:
 
     float _bodenfeuchteProzent = 0.0f;
     bool _bodenfeuchteGueltig = false; // false = noch kein Wert empfangen, Sensor wird ignoriert
+    uint32_t _bodenfeuchteEmpfang_ms = 0; // Zeitpunkt des letzten Telegramms
 
-    float _Kulturfaktor_Kc_Zone = 0.8f;    // Kulturfaktor (Crop Coefficient)            // als ETS-Parameter/GA veränderlich
+    uint8_t _Kulturfaktor_Kc_Zone = 80; // in %    // Kulturfaktor (Crop Coefficient)            // als ETS-Parameter/GA veränderlich
     float _nutzbareFeldkapazitaet_nFK_Zone = 25.0f;             // nutzbare Feldkapazität [mm] nFK = nutzbare Feldkapazität (quasi ein Schwamm) - "Größe des Behälters"
     uint8_t _Schwellwert_P_Prozent_Zone = 50;       // 50 % "Erschöpfungsfaktor ohne Stress" - quasi wann der Behälter(Schwamm) nachgefüllt wird 
     float _Schwellwert_in_mm_Zone = 0;
@@ -53,9 +54,10 @@ private:
     uint16_t calc_laufzeit_sek(float fehlmenge_mm, float niederschlagsrate_mm_h);
     float calc_Zugefuehrte_Wassermenge(float laufzeit_sek, float niederschlagsrate_mm_h);
     float calc_Bodenwasserkonto_final(float Wasserbilanzkonto, float bewaesserung_mm, float nutzbareFeldkapazitaet);
-    float calc_ETc(float ET0, float Kc);
+    float calc_ETc(float ET0, uint8_t Kc);
     bool get_lokaleSperre();
-    uint16_t getYearDay() const;
+    bool istGesperrt(bool sperreGlobal);
+    uint16_t getYearDay();
     void setKOInitialValues(void);
     void setZonenStatus(ZonenStatus status);
 
@@ -70,7 +72,7 @@ private:
     void setup() override;
     void loop() override;
     void processInputKo(GroupObject &ko) override;
-    void process_Bewaesserungsberechnung_channel(float et0Gestern, float regenmengeGestern, bool Freigabe_global);
+    void process_Bewaesserungsberechnung_channel(float et0Gestern, float regenmengeGestern, float regenmengeHeute, bool Sperre_global);
     
     bool isActive();
         
@@ -79,7 +81,11 @@ private:
    
     bool hatOffenenBedarf() const;
     bool laeuftGerade() const;
-    void starteBewaesserung(uint16_t maxLaufzeitMinuten = 0); // 0 = keine Begrenzung
+    void starteBewaesserung(uint16_t maxLaufzeitMinuten = 0, bool sperreGlobal = false);
+    void stoppeBewaesserung();
+    void pruefeSperreWaehrendLauf(bool sperreGlobal);
     void verwerfeOffenenBedarf();
+    void sende_Diagnose_KO_Bewaesserung_gesperrt();
+    void aktualisiereDiagnose(bool sperreGlobal);
 };
 

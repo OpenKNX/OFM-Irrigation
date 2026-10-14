@@ -4,18 +4,18 @@
 Eine vollständige Applikationsbeschreibung ist unter folgendem Link verfügbar: https://github.com/openknx/OFM-Meter/blob/v1/doc/Applikationsbeschreibung-Irrigation.md
 DOCCONTENT -->
 
-Das Bewässerungsmodul steuert bis zu 12 Bewässerungszonen bedarfsgesteuert anhand von Wetterdaten. Statt nach festem Zeitplan zu bewässern, berechnet es täglich, wie viel Wasser jede Zone benötigt:
+Das Bewässerungsmodul steuert bis zu 12 Bewässerungszonen bedarfsgesteuert anhand von Wetterdaten. Statt nach festem Zeitplan zu bewässern, berechnet es zu Beginn des Bewässerungsfensters, wie viel Wasser jede Zone benötigt:
 
 * **Referenzverdunstung (ET0)** nach Hargreaves-Samani aus Temperatur (Minimum, Maximum) und Standort
 * **Zonenverdunstung (ETc)** über den Kulturfaktor (Kc) der jeweiligen Zone
 * **Wasserbilanzkonto** je Zone aus Niederschlag, Verdunstung und tatsächlich ausgebrachter Wassermenge
-* **Bewässerungsbedarf** durch Vergleich des Kontos mit einem Schwellwert in Prozent der nutzbaren Feldkapazität (nFK)
+* **Bewässerungsbedarf** durch Vergleich des Kontos mit einem Schwellwert in Prozent der nutzbaren Feldkapazität (nFK). Der Regen seit Mitternacht wird dabei berücksichtigt.
 
 Die Zonen werden innerhalb eines **Bewässerungsfensters** gestartet. Zonen, die laut Kompatibilitätsmatrix nicht gleichzeitig laufen dürfen, werden nacheinander bewässert.
 
 Weitere Funktionen:
 
-* Globale Sperre und Sperre je Zone
+* Globale Sperre und Sperre je Zone, geprüft bei der Berechnung und unmittelbar vor jedem Start. Eine Sperre während des Laufs stoppt die Zone sofort.
 * Optionaler Bodenfeuchtesensor je Zone (Korrektur des Wasserbilanzkontos oder zusätzliche Sperrbedingung)
 * Rückmeldung des Magnetventils mit Überwachung und Rückbuchung der real gelaufenen Zeit
 * Wasserbilanzkonto bleibt über einen Neustart erhalten
@@ -87,9 +87,10 @@ Anteil der nutzbaren Feldkapazität (nFK) in Prozent, der aufgebraucht sein darf
 Wassermenge in mm, die der Boden dieser Zone in der durchwurzelten Schicht pflanzenverfügbar speichern kann (nFK = Feldkapazität − permanenter Welkepunkt). Bestimmt die Obergrenze des Bodenwasserkontos dieser Zone.
 <!-- DOC -->
 #### Kc-Faktor der Zone
-
+Eingabe als Ganzzahl in Prozent.
 Kulturfaktor (Crop Coefficient). Skaliert die geräteweit berechnete Referenz-Evapotranspiration (ET0) auf den tatsächlichen Wasserbedarf der in dieser Zone vorhandenen Vegetation (ETc = ET0 × Kc).
-Eingabe in der ETS mit Division durch 10. Beispiel: Eingabewert 80 entspricht dann 0,8. 
+
+Eingabe in der ETS mit Division durch 100. Beispiel: Eingabewert 80 entspricht dann 0,8. 
 <!-- DOC -->
 #### ... über KO vorgeben?
 
@@ -145,6 +146,8 @@ Wie der Wert verwendet wird, legt der ETS-Parameter fest:
 *Bodenwasserkonto korrigieren* --> Der Messwert ersetzt beim Tageswechsel den errechneten Kontostand. 
 *Zusätzliche Sicherheitsbedingung* --> Das Modell bleibt führend. Der Sensor kann eine Bewässerung nur verhindern.
 
+Der Sensor muss mindestens alle 24h einen neuen Wert senden, ansonsten wird dieser ignoriert um im Fehlerfall nicht mit falschen Werten zu rechnen.
+
 <!-- DOC -->
 #### Bewässerungsfenster Start
 
@@ -167,7 +170,7 @@ Das Fenster öffnet einmal pro Durchlauf. Sind alle Zonen früher fertig, bleibt
 - Die Uhrzeit muss gültig sein (Zeitsynchronisation über den Bus). Ohne gültige Zeit wird nicht bewässert.
 - Liegt die Startzeit nach der Endzeit, gilt das Fenster über Mitternacht (z. B. 22:00 bis 06:00).
 - Sind Startzeit und Endzeit identisch, ist das Fenster leer und es wird nie bewässert.
-
+- Eine Sperre (global, Zone oder Bodenfeuchte), die erst nach dem Fensterstart gesetzt wird, verhindert den Start der betroffenen Zone. Läuft die Zone bereits, wird sie gestoppt.
 
 <!-- DOC -->
 #### Bewässerungsfenster Ende

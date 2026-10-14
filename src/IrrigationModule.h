@@ -34,7 +34,7 @@ class IrrigationModule : public OpenKNX::Module
     uint8_t _numChannels = 0;
     bool _Sperre_Global = false; // erstmal alles freigegeben
 
-    float _ET0_gestern;
+    float _ET0_gestern = 0.0f;
 
     float _letzteEmpfangeneTemperatur = 0;
     float _letzteRegenmengeHeute = 0.0f;
@@ -49,7 +49,7 @@ class IrrigationModule : public OpenKNX::Module
         float delta;    // Diagnose 
         float omegaS;   // Diagnose 
         float phi;      // Diagnose
-        uint16_t Kalendertag_des_Jahres_J;  // Diagnose
+        uint16_t Kalendertag_des_Jahres_J; // Diagnose
     }; 
 
         // heutige Werte
@@ -65,21 +65,22 @@ class IrrigationModule : public OpenKNX::Module
     float _Temperatur_Durchschnitt_gestern = -42.0;
     float _Regenmenge_gestern = 0.0f;
 
-
-    bool _zeitfensterAktiv = false;
-    bool _fensterBereitsGestartet = false; // verhindert Mehrfachstart innerhalb desselben Fensters
-
-    bool _berechnungAusstehend = false;
-    bool _restoreAusstehend = false; // true = es gibt Werte aus dem Flash die nur mit gültiger Zeit abgerufen werden können
-    
-
+    // aus dem Flash gelesene Werte von "heute", warten auf gueltige Uhr
+    bool _restoreAusstehend = false;
+    uint16_t _restoredcurrentYday = 0;
     float _restoredTemperatur_max_heute = -42.0;
     float _restoredTemperatur_min_heute = 42.0;
-    uint16_t _restoredcurrentYday = 0;
+    float _restoredRegenmengeHeute = 0.0f;
+
+    // Bewaesserungsfenster
+    bool _zeitfensterAktiv = false;
+    bool _fensterBereitsGestartet = false; // verhindert Mehrfachstart innerhalb desselben Fensters
+    bool _berechnungAusstehend = false;    // wird im Flash gespeichert
 
     bool sindKompatibel(uint8_t zoneA, uint8_t zoneB);
     void pruefeUndStarteBewaesserungsfenster(void);
     void koordiniereZonenstart(uint16_t restMinuten);
+    void pruefeSperreLaufendeZonen(void);
 
     void process_Temperatur_Wetterstation(float aktuelleTemperatur);
     void process_Regenmenge_Wetterstation(float regenmengeHeuteMm);

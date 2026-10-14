@@ -17,7 +17,7 @@ const std::string IrrigationChannel::name()
     return "IrrigationChannel";
 }
 
-uint16_t IrrigationChannel::getYearDay() const
+uint16_t IrrigationChannel::getYearDay()
 {
     if (!openknx.time.isValid())
     {
@@ -28,6 +28,9 @@ uint16_t IrrigationChannel::getYearDay() const
     openknx.time.getLocalTime().toTm(tmNow);
     return static_cast<uint16_t>(tmNow.tm_yday + 1);
 }
+
+// Bodenfeuchte-Wert gilt nur, wenn mindestens alle 24 h ein Telegramm kommt (Sensorausfall erkennen)
+static constexpr uint32_t BODENFEUCHTE_TIMEOUT_MS = 24UL * 60UL * 60UL * 1000UL;
 
 // will be called once a KO received a telegram
 void IrrigationChannel::processInputKo(GroupObject &iKo)
@@ -64,8 +67,8 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
         }
         case IRR_KoChKc: // Kc-Faktor der Zone  
         {
-            _Kulturfaktor_Kc_Zone = KoIRR_ChKc.value(DPT_Value_Temp);
-            logDebugP("processInputKo: Kulturfaktor_Kc_Zone=%.2f", _Kulturfaktor_Kc_Zone);
+            _Kulturfaktor_Kc_Zone = KoIRR_ChKc.value(DPT_Value_1_Ucount);
+            logDebugP("processInputKo: Kulturfaktor_Kc_Zone=%u", _Kulturfaktor_Kc_Zone);
             break;
         }
         case IRR_KoChZonenSperre:
@@ -84,6 +87,7 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
         {
             _bodenfeuchteProzent = KoIRR_ChBodenfeuchte.value(DPT_Value_Temp);
             _bodenfeuchteGueltig = true;
+            _bodenfeuchteEmpfang_ms = millis();
             logDebugP("processInputKo: Bodenfeuchte=%.1f%%", _bodenfeuchteProzent);
             break;
         }
@@ -98,6 +102,14 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
 void IrrigationChannel::loop()
 {
     if (!_channelActive) return;
+
+    // Bodenfeuchte veraltet? Dann ignorieren. Die Pruefung laeuft staendig, damit der Wert
+    // vor dem Ueberlauf von millis() (nach ca. 49 Tagen) ungueltig wird.
+    if (_bodenfeuchteGueltig && (uint32_t)(millis() - _bodenfeuchteEmpfang_ms) > BODENFEUCHTE_TIMEOUT_MS)
+    {
+        _bodenfeuchteGueltig = false;
+        logInfoP("Kanal %u: Bodenfeuchte seit %u h nicht aktualisiert - Sensor wird ignoriert", _channelIndex, BODENFEUCHTE_TIMEOUT_MS / (1000 * 60 * 60));
+    }
 
     if (_ZonenStatus == ZonenStatus::Laeuft)
     {
@@ -142,7 +154,7 @@ void IrrigationChannel::setup()
     _Niederschlagsrate_Zone = ParamIRR_CHNiederschlagsrateValue;
     _Schwellwert_P_Prozent_Zone = ParamIRR_CHSchwellwertValue;
     _nutzbareFeldkapazitaet_nFK_Zone = ParamIRR_CHnFKValue;
-    _Kulturfaktor_Kc_Zone = ParamIRR_CHKcValue / 10.0f;
+    _Kulturfaktor_Kc_Zone = ParamIRR_CHKcValue;
 
     if (_kontoWiederhergestellt) // falls Flash-Werte wiederhergestellt wurden, dann das Konto ggf. anpassen
     {
@@ -198,48 +210,71 @@ void IrrigationChannel::restore()
     logDebugP("restored: Wasserbilanzkonto=%f Status=%u", _Wasserbilanzkonto, static_cast<uint8_t>(_ZonenStatus));
 }
 
+bool IrrigationChannel::istGesperrt(bool sperreGlobal)
+{
+    // ---- Bodenfeuchtesensor, Modus 2: zusätzliche Sicherheitsbedingung ----
+    bool bodenfeuchteSperrtBewaesserung = false;
+    if ((_bodenfeuchteGueltig) && (ParamIRR_ChBodenfeuchteVerwendung == PT_BodenfeuchteVerwendung::Sicherheit) && (_bodenfeuchteProzent >= (float)ParamIRR_ChSperrschwelleBodenfeuchte))
+    {
+        bodenfeuchteSperrtBewaesserung = true;
+    }
 
-void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern, float regenmengeGestern, bool Sperre_global)
+    return _Sperre_Zone || sperreGlobal || bodenfeuchteSperrtBewaesserung;
+}
+
+// Wird bei Fensteroeffnung aufgerufen: Konto buchen, Bedarf und Laufzeit bestimmen
+void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern, float regenmengeGestern, float regenmengeHeute, bool Sperre_global)
 {
     if (!_channelActive) return;
 
+    // 1. Gebuchtes Konto: Gestern-Werte
     // Tageswechsel von Modulebene berechnet ET0 und triggert das hier
     // jetzt berechnen wir den Bedarf, anhand von ETc, den Bodenwasserkonto, der Feldkapazität (nFK), Schwellwert
 
     float ETc_gestern = calc_ETc(et0Gestern, _Kulturfaktor_Kc_Zone);
-    
     _Wasserbilanzkonto = calc_Bodenwasserkonto(_Wasserbilanzkonto, regenmengeGestern, ETc_gestern, _nutzbareFeldkapazitaet_nFK_Zone);
     
-    // ---- Bodenfeuchtesensor, Modus 1: Konto korrigieren ----
+    // 2. Bodenfeuchtesensor, Modus 1: Konto korrigieren ----
+    bool korrigiert = false;
     if (_bodenfeuchteGueltig && ParamIRR_ChBodenfeuchteVerwendung == PT_BodenfeuchteVerwendung::Korrektur)
     {
         float gemessenesKonto = (_bodenfeuchteProzent / 100.0f) * _nutzbareFeldkapazitaet_nFK_Zone;
         logDebugP("Kanal %u: Konto durch Bodenfeuchte korrigiert: %.2f -> %.2f", _channelIndex, _Wasserbilanzkonto, gemessenesKonto);
         _Wasserbilanzkonto = gemessenesKonto;
+        korrigiert = true;
     }
     
-    _Schwellwert_in_mm_Zone = calc_Schwellwert_in_mm((float)_Schwellwert_P_Prozent_Zone, _nutzbareFeldkapazitaet_nFK_Zone);
-    _Bewaesserungsbedarf = calc_bedarf (_Wasserbilanzkonto, _Schwellwert_in_mm_Zone);
+    // 3. Effektives Konto fuer die Entscheidung: Regen seit Mitternacht zaehlt mit, wird aber nicht gebucht
+    //    (er wird morgen als Gestern-Regen gebucht, so entsteht keine Doppelzaehlung)
+    const float regenHeuteAnrechnung = korrigiert ? 0.0f : regenmengeHeute;
+    const float kontoEffektiv = MIN(_Wasserbilanzkonto + regenHeuteAnrechnung, _nutzbareFeldkapazitaet_nFK_Zone);
+
+
+
+    _Schwellwert_in_mm_Zone = calc_Schwellwert_in_mm(_Schwellwert_P_Prozent_Zone, _nutzbareFeldkapazitaet_nFK_Zone);
+    _Bewaesserungsbedarf = calc_bedarf (kontoEffektiv, _Schwellwert_in_mm_Zone);
 
     // sende das berechnete auf den Bus
     KoIRR_ChWasserbilanzkonto.value(_Wasserbilanzkonto, DPT_Value_Temp);
     KoIRR_ChBedarf.value(_Bewaesserungsbedarf, DPT_Switch);
 
-    // ---- Bodenfeuchtesensor, Modus 2: zusätzliche Sicherheitsbedingung ----
-    bool bodenfeuchteSperrtBewaesserung = false;
-    if (_bodenfeuchteGueltig && ParamIRR_ChBodenfeuchteVerwendung == PT_BodenfeuchteVerwendung::Sicherheit && _bodenfeuchteProzent >= (float)ParamIRR_ChSperrschwelleBodenfeuchte)
-    {
-        bodenfeuchteSperrtBewaesserung = true;
-        logDebugP("Kanal %u: Bewaesserung durch Bodenfeuchte gesperrt (%.1f%% >= %u%%)",
-                _channelIndex, _bodenfeuchteProzent, ParamIRR_ChSperrschwelleBodenfeuchte);
-    }
 
-    _Diagnose_Bewaesserung_gesperrt = _Sperre_Zone || Sperre_global || bodenfeuchteSperrtBewaesserung;
+    _Diagnose_Bewaesserung_gesperrt = istGesperrt(Sperre_global);
+    sende_Diagnose_KO_Bewaesserung_gesperrt();
+    if (_Diagnose_Bewaesserung_gesperrt)
+    {
+        logDebugP("Kanal %u: Bewaesserung gesperrt (Sperre_global=%d Zone=%d Bodenfeuchte=%.1f%%, BodenfeuchteGueltig=%d)", _channelIndex, Sperre_global, _Sperre_Zone, _bodenfeuchteProzent, _bodenfeuchteGueltig);
+    }
+    _ermittelteFehlmenge_mm = 0.0f;
+    _ermittelteLaufzeit_sekunden = 0;
     
     if (_Bewaesserungsbedarf == true && _Diagnose_Bewaesserung_gesperrt == false)
     {
-        _ermittelteFehlmenge_mm = calc_Fehlmenge_mm(_nutzbareFeldkapazitaet_nFK_Zone, _Wasserbilanzkonto);
+        _ermittelteFehlmenge_mm = calc_Fehlmenge_mm(_nutzbareFeldkapazitaet_nFK_Zone, kontoEffektiv);
         _ermittelteLaufzeit_sekunden = calc_laufzeit_sek(_ermittelteFehlmenge_mm, _Niederschlagsrate_Zone);
+
+        KoIRR_ChFehlmenge.value(_ermittelteFehlmenge_mm, DPT_Value_Temp);
+        KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec);
 
         if (_ermittelteLaufzeit_sekunden == 0)
         {
@@ -247,17 +282,12 @@ void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern
             if (_Niederschlagsrate_Zone <= 0.0f)
                 logErrorP("Kanal %u: Niederschlagsrate <= 0, Laufzeit nicht berechenbar - Zone wird uebersprungen", _channelIndex);
             else
-                logDebugP("Kanal %u: Laufzeit = 0s (Fehlmenge=%.3f mm) - Zone wird uebersprungen", _channelIndex, _ermittelteFehlmenge_mm);
-
-            KoIRR_ChFehlmenge.value(_ermittelteFehlmenge_mm, DPT_Value_Temp);
-            KoIRR_ChLaufzeit.value((uint16_t)0, DPT_TimePeriodSec);
+                logDebugP("Kanal %u: Laufzeit unter Mindestlaufzeit (Fehlmenge=%.3f mm) - Zone wird uebersprungen", _channelIndex, _ermittelteFehlmenge_mm);
             setZonenStatus(ZonenStatus::Inaktiv);
         }
         else
         {
-            // Bewaesserungsstart vormerken und Werte auf den Bus senden
-            KoIRR_ChFehlmenge.value(_ermittelteFehlmenge_mm, DPT_Value_Temp);
-            KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec);
+            // Bewaesserungsstart vormerken 
             setZonenStatus(ZonenStatus::WartetAufStart);
         }
     }
@@ -266,8 +296,9 @@ void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern
         setZonenStatus(ZonenStatus::Inaktiv);
         // nichts zu tun - naechster Vergleich wieder morgen
     }
-    logDebugP("Kanal %u: ETc_gestern=%.2f Wasserbilanzkonto=%.2f Schwellwert[mm]=%f", _channelIndex, ETc_gestern, _Wasserbilanzkonto, _Schwellwert_in_mm_Zone);
-    logDebugP("Bedarf = %i Fehlmenge[mm]=%f notw_Laufzeit[s]=%i", _Bewaesserungsbedarf , _ermittelteFehlmenge_mm, _ermittelteLaufzeit_sekunden);
+    logDebugP("Kanal %u: ETc_gestern=%.2f Konto=%.2f RegenHeute=%.2f Schwellwert[mm]=%.2f gesperrt=%d",
+              _channelIndex, ETc_gestern, _Wasserbilanzkonto, regenHeuteAnrechnung, _Schwellwert_in_mm_Zone, _Diagnose_Bewaesserung_gesperrt);
+    logDebugP("Bedarf=%i Fehlmenge[mm]=%.2f Laufzeit[s]=%u", _Bewaesserungsbedarf, _ermittelteFehlmenge_mm, _ermittelteLaufzeit_sekunden);
 }
 
 
@@ -279,10 +310,10 @@ bool IrrigationChannel::get_lokaleSperre()
 // ============================================================
 // 3. Kultur-/Zonen-Evapotranspiration ETc
 // ============================================================
-float IrrigationChannel::calc_ETc(float ET0, float Kc)
+float IrrigationChannel::calc_ETc(float ET0, uint8_t Kc)
 {
     // ETc [mm/Tag]
-    float_t ETc = ET0 * Kc;
+    float_t ETc = ET0 * ((float)Kc / 100.0f);
     return ETc;
 }
 
@@ -410,9 +441,27 @@ bool IrrigationChannel::laeuftGerade() const
     return _ZonenStatus == ZonenStatus::Laeuft || _ZonenStatus == ZonenStatus::WartetAufRueckmeldung;
 }
 
-void IrrigationChannel::starteBewaesserung(uint16_t maxLaufzeitMinuten)
+void IrrigationChannel::starteBewaesserung(uint16_t maxLaufzeitMinuten, bool sperreGlobal)
 {
     if (_ZonenStatus != ZonenStatus::WartetAufStart) return; // Schutz vor Fehlaufrufen
+
+    // Sperren unmittelbar vor dem Start pruefen (koennen sich seit der Berechnung geaendert haben)
+    if (istGesperrt(sperreGlobal))
+    {
+        logDebugP("Kanal %u: Start abgebrochen, Sperre aktiv", _channelIndex);
+        _Diagnose_Bewaesserung_gesperrt = true;
+        sende_Diagnose_KO_Bewaesserung_gesperrt();
+        setZonenStatus(ZonenStatus::Inaktiv);
+        return;
+    }
+
+    // nach Reboot: Status "WartetAufStart" kommt aus dem Flash, die Laufzeit nicht -> neu rechnen
+    if (_ermittelteLaufzeit_sekunden == 0)
+    {
+        _ermittelteFehlmenge_mm = calc_Fehlmenge_mm(_nutzbareFeldkapazitaet_nFK_Zone, _Wasserbilanzkonto);
+        _ermittelteLaufzeit_sekunden = calc_laufzeit_sek(_ermittelteFehlmenge_mm, _Niederschlagsrate_Zone);
+        logDebugP("Kanal %u: Laufzeit neu berechnet: %us", _channelIndex, _ermittelteLaufzeit_sekunden);
+    }
 
     if (_ermittelteLaufzeit_sekunden == 0)
     {
@@ -421,6 +470,7 @@ void IrrigationChannel::starteBewaesserung(uint16_t maxLaufzeitMinuten)
         return;
     }
 
+    // Laufzeit auf Restzeit des Fensters kuerzen (0 = keine Begrenzung)
     const uint32_t maxLaufzeitSekunden = maxLaufzeitMinuten * 60UL;
     if (maxLaufzeitSekunden > 0 && _ermittelteLaufzeit_sekunden > maxLaufzeitSekunden)
     {
@@ -434,6 +484,35 @@ void IrrigationChannel::starteBewaesserung(uint16_t maxLaufzeitMinuten)
     _kommandoStartMillis = millis();
     KoIRR_ChVentilansteuerung.value(true, DPT_Switch);
     logDebugP("Kanal %u: Laeuft (geplante Laufzeit=%us)", _channelIndex, _ermittelteLaufzeit_sekunden);
+}
+
+// Bricht eine laufende Bewaesserung ab. Die Rueckbuchung erfolgt ueber die normale
+// Rueckmeldung (oder den Timeout) mit der real gelaufenen Zeit.
+void IrrigationChannel::stoppeBewaesserung()
+{
+    if (_ZonenStatus != ZonenStatus::Laeuft) return;
+
+    const uint32_t laufSek = (millis() - _kommandoStartMillis) / 1000;
+    if (laufSek < _ermittelteLaufzeit_sekunden)
+        _ermittelteLaufzeit_sekunden = (uint16_t)laufSek; // Ist-Laufzeit, nicht die geplante
+
+    KoIRR_ChVentilansteuerung.value(false, DPT_Switch);
+    KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec);
+    _rueckmeldungStartMillis = millis();
+    setZonenStatus(ZonenStatus::WartetAufRueckmeldung);
+    logInfoP("Kanal %u: Bewaesserung gestoppt nach %us", _channelIndex, _ermittelteLaufzeit_sekunden);
+}
+
+void IrrigationChannel::pruefeSperreWaehrendLauf(bool sperreGlobal)
+{
+    if (!_channelActive) return;
+    if (_ZonenStatus != ZonenStatus::Laeuft) return;
+    if (!istGesperrt(sperreGlobal)) return;
+
+    logInfoP("Kanal %u: Sperre waehrend des Laufs - stoppe Bewaesserung", _channelIndex);
+    _Diagnose_Bewaesserung_gesperrt = true;
+    sende_Diagnose_KO_Bewaesserung_gesperrt();
+    stoppeBewaesserung();
 }
 
 void IrrigationChannel::verwerfeOffenenBedarf()
@@ -454,7 +533,7 @@ String IrrigationChannel::wandle_Zonenstatus_in_Text(ZonenStatus status)
         case ZonenStatus::Laeuft:
             return "Laeuft";
         case ZonenStatus::WartetAufRueckmeldung:
-            return "WartetAufRueckmeldung";
+            return "WartAufRckmld"; // max 14 Zeichen
         case ZonenStatus::Abgeschlossen:
             return "Abgeschlossen";
         case ZonenStatus::TimeoutFehler:
@@ -471,4 +550,20 @@ void IrrigationChannel::setZonenStatus(ZonenStatus status)
     _ZonenStatus = status;
     String statusText = wandle_Zonenstatus_in_Text(_ZonenStatus);
     KoIRR_ChZonenStatus.value(statusText.c_str(), DPT_String_8859_1);
+}
+
+void IrrigationChannel::sende_Diagnose_KO_Bewaesserung_gesperrt()
+{
+    KoIRR_ChDiagnoseBewaesserunggesperrt.value(_Diagnose_Bewaesserung_gesperrt, DPT_Switch);
+}
+
+void IrrigationChannel::aktualisiereDiagnose(bool sperreGlobal)
+{
+    if (!_channelActive) return;
+    const bool neu = istGesperrt(sperreGlobal);
+    if (neu != _Diagnose_Bewaesserung_gesperrt)
+    {
+        _Diagnose_Bewaesserung_gesperrt = neu;
+        sende_Diagnose_KO_Bewaesserung_gesperrt();
+    }
 }

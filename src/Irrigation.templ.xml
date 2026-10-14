@@ -48,7 +48,7 @@
                 <!-- Byte 2: SchwellwertValue -->  
                 <Parameter Id="%AID%_UP-%TT%%CC%007" Name="CH%C%SchwellwertValue" ParameterType="%AID%_PT-IRRSchwellwert" Text="Bewässerungsschwelle" Offset="2" BitOffset="0" Value="50" />
                 <!-- Byte 3: Nutzbare Feldkapazität -->  
-                <Parameter Id="%AID%_UP-%TT%%CC%009" Name="CH%C%nFKValue" ParameterType="%AID%_PT-IRRnFK" Text="Nutzbare Feldkapazität (nFK)" Offset="3" BitOffset="0" Value="250" />
+                <Parameter Id="%AID%_UP-%TT%%CC%009" Name="CH%C%nFKValue" ParameterType="%AID%_PT-IRRnFK" Text="Nutzbare Feldkapazität (nFK)" Offset="3" BitOffset="0" Value="25" />
                 <!-- Byte 4: Kc-Faktor -->  
                 <Parameter Id="%AID%_UP-%TT%%CC%011" Name="CH%C%KcValue" ParameterType="%AID%_PT-IRRKc" Text="Kc-Faktor der Zone" Offset="4" BitOffset="0" Value="80" />
                 <!-- Byte 5: Sperrschwelle Bodenfeuchte -->
@@ -69,7 +69,7 @@
               <ParameterRef Id="%AID%_UP-%TT%%CC%008_R-%TT%%CC%00801" RefId="%AID%_UP-%TT%%CC%008" /> <!-- nFKValue via KO -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%009_R-%TT%%CC%00901" RefId="%AID%_UP-%TT%%CC%009" SuffixText="mm" /> <!-- nFKValue -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001" RefId="%AID%_UP-%TT%%CC%010" /> <!-- KcValue via KO  -->
-              <ParameterRef Id="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_UP-%TT%%CC%011" SuffixText="*0,1" /> <!-- KcValue -->
+              <ParameterRef Id="%AID%_UP-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_UP-%TT%%CC%011" SuffixText="*0,01" /> <!-- KcValue -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%012_R-%TT%%CC%01201" RefId="%AID%_UP-%TT%%CC%012" /> <!-- BodenfeuchteVerwendung -->
               <ParameterRef Id="%AID%_UP-%TT%%CC%013_R-%TT%%CC%01301" RefId="%AID%_UP-%TT%%CC%013" SuffixText="%" /> <!-- Sperrschwelle Bodenfeuchte -->
             
@@ -96,10 +96,10 @@
               <ComObject Id="%AID%_O-%TT%%CC%010" Name="Ch%C%Niederschlagsrate"  Text="Zone %C%: Niederschlagsrate[mm/h]" FunctionText="Eingang Niederschlagsrate [mm/h]" Number="%K0%" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%%CC%011" Name="Ch%C%Schwellwert"        Text="Zone %C%: Schwellwert[%]" FunctionText="Eingang Schwellwert [%]" Number="%K1%" ObjectSize="1 Byte" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
               <ComObject Id="%AID%_O-%TT%%CC%012" Name="Ch%C%nFK"                Text="Zone %C%: nFK" FunctionText="Eingang nFK [mm]" Number="%K2%" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
-              <ComObject Id="%AID%_O-%TT%%CC%013" Name="Ch%C%Kc"                 Text="Zone %C%: Kc" FunctionText="Eingang Kc-Faktor" Number="%K3%" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%013" Name="Ch%C%Kc"                 Text="Zone %C%: Kc" FunctionText="Eingang Kc-Faktor [%]" Number="%K3%" ObjectSize="1 Byte" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-10" /> <!-- Werte von 0 - 150 möglich -->
 
               <!-- Eingänge -->
-              <ComObject Id="%AID%_O-%TT%%CC%016" Name="Ch%C%ZonenSperre"        Text="Zone %C%: Sperre" FunctionText="Sperre" Number="%K4%" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-3" />
+              <ComObject Id="%AID%_O-%TT%%CC%016" Name="Ch%C%ZonenSperre"        Text="Zone %C%: Sperre" FunctionText="Sperre" Number="%K4%" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Enabled" DatapointType="DPST-1-2" />
               <ComObject Id="%AID%_O-%TT%%CC%021" Name="Ch%C%StatusMagnetventil" Text="Zone %C%: Status Magnetventil"  FunctionText="Eingang Status Magnetventil" Number="%K5%" ObjectSize="1 Bit"  ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
 
               <!-- Ausgänge -->

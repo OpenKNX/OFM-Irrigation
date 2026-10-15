@@ -218,6 +218,15 @@
               <ComObject Id="%AID%_O-%TT%00108" Name="TMaxGestern" FunctionText="Global Ausgang:" Text="Berechnung Temperatur max gestern"                  Number="8" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%00109" Name="TMinGestern" FunctionText="Global Ausgang:" Text="Berechnung Temperatur min gestern"                  Number="9" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
             
+              <!-- K10 reserved -->
+              <!-- K11 reserved -->
+              <!-- K12 reserved -->
+              <!-- K13 reserved -->
+              <!-- K14 reserved -->
+              <!-- K15 reserved -->
+              
+
+
             </ComObjectTable>
             <ComObjectRefs>
               <ComObjectRef Id="%AID%_O-%TT%00100_R-%TT%0010001" RefId="%AID%_O-%TT%00100" />              <!-- ET0 -->

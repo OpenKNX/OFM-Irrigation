@@ -41,12 +41,15 @@
               <ParameterType Id="%AID%_PT-IRRKc" Name="IRRKc">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="150" />
               </ParameterType>
-              <ParameterType Id="%AID%_PT-IRRStunde" Name="IRRStunde">
+              <ParameterType Id="%AID%_PT-Bewaesserungszeit" Name="IRRBewaesserungszeit">
+								<TypeTime SizeInBit="16" Unit="Minutes" minInclusive="0" maxInclusive="1440" UIHint="Time_hhmm" />
+							</ParameterType>
+              <!-- <ParameterType Id="%AID%_PT-IRRStunde" Name="IRRStunde">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="23" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-IRRMinute" Name="IRRMinute">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="59" />
-              </ParameterType>
+              </ParameterType> -->
               <ParameterType Id="%AID%_PT-IRRBodenfeuchteVerwendung" Name="IRRBodenfeuchteVerwendung" op:headerExport="enum" op:headerName="BodenfeuchteVerwendung">
                 <TypeRestriction Base="Value" SizeInBit="2">
                   <Enumeration Text="Nicht verwendet"                  Value="0" Id="%ENID%" op:headerName="Aus" />
@@ -126,18 +129,24 @@
                 <Parameter Id="%AID%_UP-%TT%00095" Name="KompatibelZone11Zone12" ParameterType="%AID%_PT-CheckBox" Text="Zone 11 + Zone 12" Offset="8" BitOffset="1" Value="0" />
               </Union>
               <Union SizeInBit="40"> <Memory CodeSegment="%MID%" Offset="10" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%00020" Name="BewaesserungsstartStunde" ParameterType="%AID%_PT-IRRStunde" Text="Bewässerungsfenster: Startstunde" Offset="0" BitOffset="0" Value="3" /> 
+
+                <Parameter Id="%AID%_UP-%TT%00020" Name="Bewaesserungsstart" ParameterType="%AID%_PT-Bewaesserungszeit" Text="Bewässerungsfenster: Start" Offset="0" BitOffset="0" Value="180" /> <!-- Start 3 Uhr --> 
+                <Parameter Id="%AID%_UP-%TT%00022" Name="Bewaesserungsende" ParameterType="%AID%_PT-Bewaesserungszeit" Text="Bewässerungsfenster: Ende" Offset="2" BitOffset="0" Value="360" />  <!-- Ende 6 Uhr --> 
+
+                <!-- <Parameter Id="%AID%_UP-%TT%00020" Name="BewaesserungsstartStunde" ParameterType="%AID%_PT-IRRStunde" Text="Bewässerungsfenster: Startstunde" Offset="0" BitOffset="0" Value="3" /> 
                 <Parameter Id="%AID%_UP-%TT%00021" Name="BewaesserungsstartMinute" ParameterType="%AID%_PT-IRRMinute" Text="Bewässerungsfenster: Startminute" Offset="1" BitOffset="0" Value="0" /> 
                 <Parameter Id="%AID%_UP-%TT%00022" Name="BewaesserungsendeStunde" ParameterType="%AID%_PT-IRRStunde" Text="Bewässerungsfenster: Endstunde" Offset="2" BitOffset="0" Value="6" /> 
-                <Parameter Id="%AID%_UP-%TT%00023" Name="BewaesserungsendeMinute" ParameterType="%AID%_PT-IRRMinute" Text="Bewässerungsfenster: Endminute" Offset="3" BitOffset="0" Value="0" /> 
+                <Parameter Id="%AID%_UP-%TT%00023" Name="BewaesserungsendeMinute" ParameterType="%AID%_PT-IRRMinute" Text="Bewässerungsfenster: Endminute" Offset="3" BitOffset="0" Value="0" />  -->
+                
                 <Parameter Id="%AID%_UP-%TT%00024" Name="RegenmengeDpt" ParameterType="%AID%_PT-IRRRainDpt" Text="Datentyp Regenmenge" Offset="4" BitOffset="0" Value="1" />  
+              
               </Union>
             </Parameters>
             <ParameterRefs>
-              <ParameterRef Id="%AID%_UP-%TT%00020_R-%TT%0002001" RefId="%AID%_UP-%TT%00020" /> <!-- StartzeitStunde -->
-              <ParameterRef Id="%AID%_UP-%TT%00021_R-%TT%0002101" RefId="%AID%_UP-%TT%00021" /> <!-- StartzeitMinute -->
-              <ParameterRef Id="%AID%_UP-%TT%00022_R-%TT%0002201" RefId="%AID%_UP-%TT%00022" /> <!-- EndzeitStunde -->
-              <ParameterRef Id="%AID%_UP-%TT%00023_R-%TT%0002301" RefId="%AID%_UP-%TT%00023" /> <!-- EndzeitMinute -->
+              <ParameterRef Id="%AID%_UP-%TT%00020_R-%TT%0002001" RefId="%AID%_UP-%TT%00020" /> <!-- Startzeit -->
+              <!-- <ParameterRef Id="%AID%_UP-%TT%00021_R-%TT%0002101" RefId="%AID%_UP-%TT%00021" /> StartzeitMinute -->
+              <ParameterRef Id="%AID%_UP-%TT%00022_R-%TT%0002201" RefId="%AID%_UP-%TT%00022" /> <!-- Endzeit -->
+              <!-- <ParameterRef Id="%AID%_UP-%TT%00023_R-%TT%0002301" RefId="%AID%_UP-%TT%00023" /> EndzeitMinute -->
               <ParameterRef Id="%AID%_UP-%TT%00024_R-%TT%0002401" RefId="%AID%_UP-%TT%00024" /> <!-- RegenmengeDpt -->
               <ParameterRef Id="%AID%_UP-%TT%00030_R-%TT%0003001" RefId="%AID%_UP-%TT%00030" />
               <ParameterRef Id="%AID%_UP-%TT%00031_R-%TT%0003101" RefId="%AID%_UP-%TT%00031" />
@@ -244,9 +253,9 @@
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Zeitfenster" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00020_R-%TT%0002001" HelpContext="IRR-Bewaesserungsfenster-Start" IndentLevel="1" /> <!-- StartzeitStunde -->
-                <ParameterRefRef RefId="%AID%_UP-%TT%00021_R-%TT%0002101" HelpContext="IRR-Bewaesserungsfenster-Start" IndentLevel="1" /> <!-- StartzeitMinute -->
+                <!-- <ParameterRefRef RefId="%AID%_UP-%TT%00021_R-%TT%0002101" HelpContext="IRR-Bewaesserungsfenster-Start" IndentLevel="1" /> StartzeitMinute -->
                 <ParameterRefRef RefId="%AID%_UP-%TT%00022_R-%TT%0002201" HelpContext="IRR-Bewaesserungsfenster-Ende" IndentLevel="1" /> <!-- EndzeitStunde -->
-                <ParameterRefRef RefId="%AID%_UP-%TT%00023_R-%TT%0002301" HelpContext="IRR-Bewaesserungsfenster-Ende" IndentLevel="1" /> <!-- EndzeitMinute -->
+                <!-- <ParameterRefRef RefId="%AID%_UP-%TT%00023_R-%TT%0002301" HelpContext="IRR-Bewaesserungsfenster-Ende" IndentLevel="1" /> EndzeitMinute -->
                 
 
                 <!-- globale KOs -->

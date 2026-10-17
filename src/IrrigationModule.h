@@ -20,6 +20,7 @@ class IrrigationModule : public OpenKNX::Module
     bool debug();
     void loop() override;
     void setup() override;
+    void processAfterStartupDelay() override;
     const std::string name() override;
     const std::string version() override;
     

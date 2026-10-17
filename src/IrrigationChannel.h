@@ -71,6 +71,7 @@ private:
     const std::string name() override;
     void setup() override;
     void loop() override;
+    void processAfterStartupDelay();
     void processInputKo(GroupObject &ko) override;
     void process_Bewaesserungsberechnung_channel(float et0Gestern, float regenmengeGestern, float regenmengeHeute, bool Sperre_global);
     

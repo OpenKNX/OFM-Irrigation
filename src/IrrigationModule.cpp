@@ -76,6 +76,21 @@ void IrrigationModule::setup()
     logInfoP("setup() DONE");
 }
 
+void IrrigationModule::processAfterStartupDelay()
+{
+    logDebugP("processAfterStartupDelay");
+    if (!KoIRR_GlobaleSperre.initialized())
+    {
+        KoIRR_GlobaleSperre.requestObjectRead();
+    }
+
+    logIndentUp();
+    for (uint8_t i = 0; i < IRR_ChannelCount; i++)
+    {
+        _channels[i]->processAfterStartupDelay();
+    }
+    logIndentDown();
+}
 
 
 // will be called once a KO received a telegram
@@ -498,8 +513,8 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
     constexpr uint16_t MINUTEN_PRO_TAG = 24 * 60;
 
     const uint16_t jetzt = tmNow.tm_hour * 60 + tmNow.tm_min;
-    const uint16_t start = ParamIRR_BewaesserungsstartStunde * 60 + ParamIRR_BewaesserungsstartMinute;
-    const uint16_t ende  = ParamIRR_BewaesserungsendeStunde * 60 + ParamIRR_BewaesserungsendeMinute;
+    const uint16_t start = ParamIRR_Bewaesserungsstart * 60;
+    const uint16_t ende  = ParamIRR_Bewaesserungsende * 60;
 
     bool imFenster = false;
     uint16_t restMinuten = 0;
@@ -563,9 +578,7 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
     {
         _zeitfensterAktiv = true;
         _fensterBereitsGestartet = true;
-        logInfoP("Bewaesserungsfenster gestartet (%02d:%02d - %02d:%02d)",
-                 ParamIRR_BewaesserungsstartStunde, ParamIRR_BewaesserungsstartMinute,
-                 ParamIRR_BewaesserungsendeStunde, ParamIRR_BewaesserungsendeMinute);
+        logInfoP("Bewaesserungsfenster gestartet (%02d:%02d - %02d:%02d)", ParamIRR_Bewaesserungsstart / 60, ParamIRR_Bewaesserungsstart % 60, ParamIRR_Bewaesserungsende / 60, ParamIRR_Bewaesserungsende % 60);
         // Bedarf jetzt berechnen: Regen und Sperren bis zum Fensterstart sind beruecksichtigt
         if (_berechnungAusstehend)
         {

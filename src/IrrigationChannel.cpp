@@ -99,6 +99,20 @@ void IrrigationChannel::processInputKo(GroupObject &iKo)
     logIndentDown();
 }
 
+void IrrigationChannel::processAfterStartupDelay()
+{
+    // start after device global delay
+    if (_channelActive)
+    {
+        logDebugP("processAfterStartupDelayChannel %u: channel active", _channelIndex);
+        if (!KoIRR_ChZonenSperre.initialized())
+        {
+            KoIRR_ChZonenSperre.requestObjectRead();
+        }
+    }
+}
+
+
 void IrrigationChannel::loop()
 {
     if (!_channelActive) return;

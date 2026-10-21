@@ -127,8 +127,25 @@ void IrrigationChannel::loop()
 
     if (_ZonenStatus == ZonenStatus::Laeuft)
     {
-        uint32_t laufSek = (millis() - _kommandoStartMillis) / 1000;
-        if (laufSek >= _ermittelteLaufzeit_sekunden)
+        const uint32_t laufSek = (millis() - _kommandoStartMillis) / 1000;
+        const bool zeitAbgelaufen = laufSek >= _ermittelteLaufzeit_sekunden;
+        const bool vonExternAus = _ventilWarOffenImLauf && !_statusMagnetventilLetzter;
+
+        if (vonExternAus && !zeitAbgelaufen)
+        {
+            // Ventil war offen und wurde extern geschlossen: Ist-Zeit buchen, kein weiteres Warten
+            logInfoP("Kanal %u: Ventil extern geschlossen nach %us", _channelIndex, (uint16_t)laufSek);
+            KoIRR_ChVentilansteuerung.value(false, DPT_Switch);
+            _ermittelteLaufzeit_sekunden = (uint16_t)laufSek;
+            const float mm = calc_Zugefuehrte_Wassermenge((float)laufSek, _Niederschlagsrate_Zone);
+            _Wasserbilanzkonto = calc_Bodenwasserkonto_final(_Wasserbilanzkonto, mm, _nutzbareFeldkapazitaet_nFK_Zone);
+            KoIRR_ChWasserbilanzkonto.value(_Wasserbilanzkonto, DPT_Value_Temp);
+            KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec);
+            setZonenStatus(ZonenStatus::Abgeschlossen);
+            return;
+        }
+
+        if (zeitAbgelaufen)
         {
             KoIRR_ChVentilansteuerung.value(false, DPT_Switch);
             _rueckmeldungStartMillis = millis();
@@ -147,9 +164,19 @@ void IrrigationChannel::loop()
             setZonenStatus(ZonenStatus::TimeoutFehler);
             logDebugP( "Kanal %u: Timeout Ventil-Rueckmeldung", _channelIndex);
 
-            // wir gehen von aus, dass Wasser geflossen ist, daher Bodenwasserkonto anpassen
-            const float Wassermenge_mm = calc_Zugefuehrte_Wassermenge((float)_ermittelteLaufzeit_sekunden, _Niederschlagsrate_Zone);
-            _Wasserbilanzkonto = calc_Bodenwasserkonto_final(_Wasserbilanzkonto, Wassermenge_mm, _nutzbareFeldkapazitaet_nFK_Zone);
+            // bool _ventilWarOffen = false;   // in starteBewaesserung() auf false, in onStatusMagnetventilChanged(true) auf true
+            if (_ventilWarOffenImLauf) 
+            { 
+                // wir gehen von aus, dass Wasser geflossen ist, daher Bodenwasserkonto anpassen
+                const float Wassermenge_mm = calc_Zugefuehrte_Wassermenge((float)_ermittelteLaufzeit_sekunden, _Niederschlagsrate_Zone);
+                _Wasserbilanzkonto = calc_Bodenwasserkonto_final(_Wasserbilanzkonto, Wassermenge_mm, _nutzbareFeldkapazitaet_nFK_Zone);
+            } 
+            else 
+            { 
+                logErrorP("Kanal %u: Ventil hat nie geoeffnet - keine Buchung", _channelIndex);
+            }
+
+
             KoIRR_ChWasserbilanzkonto.value(_Wasserbilanzkonto, DPT_Value_Temp);
         }
     }
@@ -287,9 +314,6 @@ void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern
         _ermittelteFehlmenge_mm = calc_Fehlmenge_mm(_nutzbareFeldkapazitaet_nFK_Zone, kontoEffektiv);
         _ermittelteLaufzeit_sekunden = calc_laufzeit_sek(_ermittelteFehlmenge_mm, _Niederschlagsrate_Zone);
 
-        KoIRR_ChFehlmenge.value(_ermittelteFehlmenge_mm, DPT_Value_Temp);
-        KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec);
-
         if (_ermittelteLaufzeit_sekunden == 0)
         {
             // Bedarf vorhanden, aber nicht bewaesserbar (z. B. Niederschlagsrate <= 0 oder Fehlmenge minimal)
@@ -310,6 +334,12 @@ void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern
         setZonenStatus(ZonenStatus::Inaktiv);
         // nichts zu tun - naechster Vergleich wieder morgen
     }
+
+    // Fehlmenge und Laufzeit immer senden (auch 0 bei keinem Bedarf / Sperre),
+    // damit auf dem Bus keine veralteten Werte stehen bleiben
+    KoIRR_ChFehlmenge.value(_ermittelteFehlmenge_mm, DPT_Value_Temp);
+    KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec);
+
     logDebugP("Kanal %u: ETc_gestern=%.2f Konto=%.2f RegenHeute=%.2f Schwellwert[mm]=%.2f gesperrt=%d",
               _channelIndex, ETc_gestern, _Wasserbilanzkonto, regenHeuteAnrechnung, _Schwellwert_in_mm_Zone, _Diagnose_Bewaesserung_gesperrt);
     logDebugP("Bedarf=%i Fehlmenge[mm]=%.2f Laufzeit[s]=%u", _Bewaesserungsbedarf, _ermittelteFehlmenge_mm, _ermittelteLaufzeit_sekunden);
@@ -421,11 +451,17 @@ float IrrigationChannel::calc_Bodenwasserkonto_final(float Bodenwasserkonto_neu,
 }
 
 void IrrigationChannel::onStatusMagnetventilChanged(bool offen)
-{
+{  
+    if (offen && laeuftGerade())
+    {
+        _ventilWarOffenImLauf = true;
+    }
+
     if (offen == _statusMagnetventilLetzter) return;
+
     _statusMagnetventilLetzter = offen;
 
-    if (offen) return; // steigende Flanke ist hier nicht mehr relevant
+    if (offen) return;// steigende Flanke ist hier nicht mehr relevant
 
     // fallende Flanke: nur auswerten, wenn wir GENAU darauf warten
     if (_ZonenStatus != ZonenStatus::WartetAufRueckmeldung) return;
@@ -497,6 +533,7 @@ void IrrigationChannel::starteBewaesserung(uint16_t maxLaufzeitMinuten, bool spe
     setZonenStatus(ZonenStatus::Laeuft);
     _kommandoStartMillis = millis();
     KoIRR_ChVentilansteuerung.value(true, DPT_Switch);
+    _ventilWarOffenImLauf = false;     
     logDebugP("Kanal %u: Laeuft (geplante Laufzeit=%us)", _channelIndex, _ermittelteLaufzeit_sekunden);
 }
 

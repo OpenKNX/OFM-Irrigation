@@ -513,8 +513,8 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
     constexpr uint16_t MINUTEN_PRO_TAG = 24 * 60;
 
     const uint16_t jetzt = tmNow.tm_hour * 60 + tmNow.tm_min;
-    const uint16_t start = ParamIRR_Bewaesserungsstart * 60;
-    const uint16_t ende  = ParamIRR_Bewaesserungsende * 60;
+    const uint16_t start = ParamIRR_Bewaesserungsstart; // Minuten seit 00:00
+    const uint16_t ende  = ParamIRR_Bewaesserungsende;
 
     bool imFenster = false;
     uint16_t restMinuten = 0;

@@ -3,8 +3,6 @@
 <KNX xmlns="http://knx.org/xml/project/20"
   xmlns:op="http://github.com/OpenKNX/OpenKNXproducer">
 
-  <op:config name="%IRR_NumChannelsDefault%" value="%N%" />
-
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
       <ApplicationPrograms>
@@ -217,9 +215,9 @@
             </ParameterRefs>    
             <ComObjectTable>
               <ComObject Id="%AID%_O-%TT%00100" Name="Berechnung_ET0"            FunctionText="Global Ausgang"  Text="Berechnung ET0 [mm/Tag]"              Number="0" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
-              <ComObject Id="%AID%_O-%TT%00101" Name="Temperatur_Wetterstation"     FunctionText="Global Eingang:" Text="Aktuelle Temperatur"               Number="1" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
-              <ComObject Id="%AID%_O-%TT%00102" Name="Regenmenge_Wetterstation"     FunctionText="Global Eingang:" Text="Regenmenge heute"                  Number="2" ObjectSize="4 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-14-0" />
-              <ComObject Id="%AID%_O-%TT%00103" Name="GlobaleSperre" FunctionText="Global Eingang:" Text="Globale Sperre Bewässerung"                       Number="3" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Enabled" DatapointType="DPST-1-2" />
+              <ComObject Id="%AID%_O-%TT%00101" Name="Temperatur_Wetterstation"     FunctionText="Global Eingang:" Text="Aktuelle Temperatur"               Number="1" ObjectSize="2 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
+              <ComObject Id="%AID%_O-%TT%00102" Name="Regenmenge_Wetterstation"     FunctionText="Global Eingang:" Text="Regenmenge heute"                  Number="2" ObjectSize="4 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-14-0" />
+              <ComObject Id="%AID%_O-%TT%00103" Name="GlobaleSperre" FunctionText="Global Eingang:" Text="Globale Sperre Bewässerung"                       Number="3" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-2" />
               <ComObject Id="%AID%_O-%TT%00104" Name="TDurchschnittHeute" FunctionText="Global Ausgang:" Text="Berechnung Durchschnittstemperatur heute"    Number="4" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%00105" Name="TDurchschnittGestern" FunctionText="Global Ausgang:" Text="Berechnung Durchschnittstemperatur gestern" Number="5" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />
               <ComObject Id="%AID%_O-%TT%00106" Name="TMaxHeute" FunctionText="Global Ausgang:" Text="Berechnung Temperatur max heute"                      Number="6" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-1" />

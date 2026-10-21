@@ -43,6 +43,7 @@ private:
     bool _statusMagnetventilLetzter = false; // letzter bekannter Zustand, für Flankenerkennung
     uint32_t _ventil_Rueckmeldung_timeout_s = 60; //Sekunden timeout - bricht ab, wenn die Laufzeit über 60s geht.
     uint32_t _rueckmeldungStartMillis = 0;
+    bool _ventilWarOffenImLauf = false; // wurde in diesem Lauf eine steigende Flanke der Rueckmeldung gesehen?
 
     int16_t _letzterBewaesserungsTag = -1;
 

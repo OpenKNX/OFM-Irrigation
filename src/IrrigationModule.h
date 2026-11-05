@@ -1,0 +1,112 @@
+#pragma once
+#include "OpenKNX.h"
+#include "IrrigationChannel.h"
+#include "hardware.h"
+#include "knxprod.h"
+
+#define IRR_FLASH_MAGIC_WORD_LEN 4
+#define IRR_FLASH_VERSION        1
+class IrrigationModule : public OpenKNX::Module
+{
+  protected:
+    bool _debug = false;
+
+  public:
+    IrrigationModule();
+    ~IrrigationModule();
+    void processInputKo(GroupObject &ko) override;
+    void showHelp() override;
+    bool processCommand(const std::string command, bool diagnose) override;
+    bool debug();
+    void loop() override;
+    void setup() override;
+    void processAfterStartupDelay() override;
+    const std::string name() override;
+    const std::string version() override;
+    
+
+    // persistance handling
+    uint16_t flashSize() override;
+    void writeFlash() override;
+    void readFlash(const uint8_t *iBuffer, const uint16_t iSize) override;
+    
+  private:
+    IrrigationChannel *_channels[IRR_ChannelCount] = {}; // init mit // channel[0] = nullptr, // channel[1] = nullptr, usw
+    uint8_t _numChannels = 0;
+    bool _Sperre_Global = false; // erstmal alles freigegeben
+
+    float _ET0_gestern = 0.0f;
+
+    float _letzteEmpfangeneTemperatur = 0;
+    float _letzteRegenmengeHeute = 0.0f;
+    int16_t _letzterBekannterTag = -1; // -1 = "noch nie gesehen"
+  
+
+    
+    struct RaResult
+    {
+        float ra_mm;    // Ra bereits in mm/Tag (inkl. 0.408-Faktor)
+        float dr;       // Diagnose
+        float delta;    // Diagnose 
+        float omegaS;   // Diagnose 
+        float phi;      // Diagnose
+        uint16_t Kalendertag_des_Jahres_J; // Diagnose
+    }; 
+
+        // heutige Werte
+    float _Temperatur_max_heute = -42.0;
+    float _Temperatur_min_heute = 42.0;
+    float _Temperatur_Durchschnitt_heute = -42.0;
+    bool _gueltigeWerte_heute = false;
+    
+    // Gestrige Werte
+    bool _gueltigeWerte_gestern = false;
+    float _Temperatur_max_gestern = -42.0;
+    float _Temperatur_min_gestern = 42.0;
+    float _Temperatur_Durchschnitt_gestern = -42.0;
+    float _Regenmenge_gestern = 0.0f;
+
+    // aus dem Flash gelesene Werte von "heute", warten auf gueltige Uhr
+    bool _restoreAusstehend = false;
+    uint16_t _restoredcurrentYday = 0;
+    float _restoredTemperatur_max_heute = -42.0;
+    float _restoredTemperatur_min_heute = 42.0;
+    float _restoredRegenmengeHeute = 0.0f;
+
+    // Bewaesserungsfenster
+    bool _zeitfensterAktiv = false;
+    bool _fensterBereitsGestartet = false; // verhindert Mehrfachstart innerhalb desselben Fensters
+    bool _berechnungAusstehend = false;    // wird im Flash gespeichert
+
+    bool sindKompatibel(uint8_t zoneA, uint8_t zoneB);
+    void pruefeUndStarteBewaesserungsfenster(void);
+    void koordiniereZonenstart(uint16_t restMinuten);
+    void pruefeSperreLaufendeZonen(void);
+
+    void process_Temperatur_Wetterstation(float aktuelleTemperatur);
+    void process_Regenmenge_Wetterstation(float regenmengeHeuteMm);
+    uint16_t getYearDay(void); // liefert J, 1-basiert (1..366)
+    float get_Geographische_Breite_Radiant();
+    RaResult calc_Ra(uint16_t J);
+    void Tageswechsel_Werte_speichern(uint16_t gestern);
+
+    void calculateEt0(uint16_t TagdesJahres);
+    float calc_ET0(float T_mean, float T_max, float T_min, float Ra_mm);
+    bool get_globaleSperre();
+    void check_for_restored_values(uint16_t currentYday);
+
+    static const uint8_t _magicWord[IRR_FLASH_MAGIC_WORD_LEN];
+};
+
+extern IrrigationModule openknxIrrigationModule;
+
+
+
+
+
+
+
+
+
+
+

@@ -134,6 +134,7 @@ void IrrigationModule::processInputKo(GroupObject &iKo)
 void IrrigationModule::showHelp()
 {
     openknx.console.printHelpLine("IRR debug", "enable/disable debug mode");
+    openknx.console.printHelpLine("IRR day", "show day and temperature diagnostics");
 }
 
 // ============================================================
@@ -481,10 +482,65 @@ void IrrigationModule::process_Regenmenge_Wetterstation (float regenmengeHeuteMm
     _letzteRegenmengeHeute = regenmengeHeuteMm;
 }
 
+
 bool IrrigationModule::processCommand(const std::string command, bool diagnose)
 {
     if (command.substr(0, 3) == "irr")
     {
+        if (command == "irr et0")
+        {
+            if (diagnose)
+            {
+#ifdef BASE_KoDiagnose
+                auto writeLine = [](const char *format, auto value)
+                {
+                    openknx.console.writeDiagnoseKo(format, value);
+                    openknx.console.writeDiagnoseKo("");
+                };
+
+                writeLine("ET0 %.1e", static_cast<float>(_ET0_gestern));
+#endif
+                return true;
+            }
+        }
+        if (command == "irr day")
+        {
+            const bool timeValid = openknx.time.isValid();
+            const uint16_t heute = getYearDay();
+
+            if (diagnose)
+            {
+#ifdef BASE_KoDiagnose
+                auto writeLine = [](const char *format, auto value)
+                {
+                    openknx.console.writeDiagnoseKo(format, value);
+                    openknx.console.writeDiagnoseKo("");
+                };
+
+                writeLine("%s", timeValid ? "TimeValid" : "TimeInvalid");
+                writeLine("day %u", static_cast<unsigned int>(heute));
+                writeLine("seen %d", static_cast<int>(_letzterBekannterTag));
+                writeLine("hOK %d", static_cast<int>(_gueltigeWerte_heute));
+                writeLine("hMax %.1f", _Temperatur_max_heute);
+                writeLine("hMin %.1f", _Temperatur_min_heute);
+                writeLine("hAvg %.1f", _Temperatur_Durchschnitt_heute);
+                writeLine("yOK %d", static_cast<int>(_gueltigeWerte_gestern));
+                writeLine("yMax %.1f", _Temperatur_max_gestern);
+                writeLine("yMin %.1f", _Temperatur_min_gestern);
+                writeLine("yAvg %.1f", _Temperatur_Durchschnitt_gestern);
+                writeLine("yRain %.1e", _Regenmenge_gestern);
+#endif
+            }
+            else
+            {
+                logInfoP("time=%s day now=%u letzterbekannterTag=%d", timeValid ? "TimeValid" : "TimeInvalid", static_cast<unsigned int>(heute), _letzterBekannterTag);
+                logInfoP("today valid=%d max=%.1f min=%.1f avg=%.1f", _gueltigeWerte_heute, _Temperatur_max_heute, _Temperatur_min_heute, _Temperatur_Durchschnitt_heute);
+                logInfoP("yesterday valid=%d max=%.1f min=%.1f avg=%.1f", _gueltigeWerte_gestern, _Temperatur_max_gestern, _Temperatur_min_gestern, _Temperatur_Durchschnitt_gestern);
+                logInfoP("Regenmenge gestern %.1f", _Regenmenge_gestern);
+            }
+            return true;
+        }
+
         if (!diagnose && command == "irr debug")
         {
             _debug = !_debug;

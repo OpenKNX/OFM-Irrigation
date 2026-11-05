@@ -202,3 +202,20 @@ Das Ende ist eine feste Grenze:
 **Empfehlung**
 
 Plane das Fenster so groß, dass alle Zonen im Normalfall vollständig bewässert werden können. 
+
+
+<!-- DOC -->
+### Diagnose
+
+#### Zugriff über Diagnose-Objekt
+
+Die Diagnose-Kommandos werden über das zentrale OpenKNX-Diagnose-Objekt des Gerätes gesendet. Die Antworten werden als einzelne DPT-16.001-Telegramme über dieses Objekt zurückgegeben. Eine Diagnosezeile darf daher höchstens 14 Zeichen enthalten.
+
+#### Diagnose-Kommandos
+
+* `irr day` - Liefert den Zeitstatus (`TimeValid`/`TimeInvalid`), den aktuellen Jahrestag (`day`), den zuletzt verarbeiteten Jahrestag (`seen`) sowie die Gültigkeit und Temperaturwerte von heute (`h`) und gestern (`y`). Zusätzlich wird die Regenmenge von gestern (`yRain`) ausgegeben. Bei ungültiger Zeit ist `day` gleich 0.
+* `irr et0` - Liefert den zuletzt berechneten ET0-Wert.
+
+#### Konsolen-Kommando
+
+`irr debug` schaltet die Debug-Ausgabe des Moduls um. Dieses Kommando wird über die normale Konsole eingegeben und nicht über das Diagnose-Objekt verarbeitet.

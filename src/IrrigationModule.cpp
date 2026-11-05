@@ -349,6 +349,7 @@ uint16_t IrrigationModule::getYearDay(void)
     // use current time
     tm tmNow;
     openknx.time.getLocalTime().toTm(tmNow);
+    mktime(&tmNow); // aktueller Workaround weil DateTime::toTm(tm&) tm_yday nicht setzt.
     return (uint16_t)(tmNow.tm_yday + 1); // +1 damit es Tagbasiert (1..366) 1.1. ist dann der 1. Tag
 }
 

@@ -23,7 +23,8 @@ class IrrigationModule : public OpenKNX::Module
     void processAfterStartupDelay() override;
     const std::string name() override;
     const std::string version() override;
-    
+    uint16_t getYearDay(void); // liefert J, 1-basiert (1..366); auch von IrrigationChannel genutzt
+
 
     // persistance handling
     uint16_t flashSize() override;
@@ -85,14 +86,12 @@ class IrrigationModule : public OpenKNX::Module
 
     void process_Temperatur_Wetterstation(float aktuelleTemperatur);
     void process_Regenmenge_Wetterstation(float regenmengeHeuteMm);
-    uint16_t getYearDay(void); // liefert J, 1-basiert (1..366)
     float get_Geographische_Breite_Radiant();
     RaResult calc_Ra(uint16_t J);
     void Tageswechsel_Werte_speichern(uint16_t gestern);
 
     void calculateEt0(uint16_t TagdesJahres);
     float calc_ET0(float T_mean, float T_max, float T_min, float Ra_mm);
-    bool get_globaleSperre();
     void check_for_restored_values(uint16_t currentYday);
 
     static const uint8_t _magicWord[IRR_FLASH_MAGIC_WORD_LEN];

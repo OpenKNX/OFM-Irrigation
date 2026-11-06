@@ -434,13 +434,6 @@ float IrrigationModule::calc_ET0(float T_mean, float T_max, float T_min, float R
 }
 
 
-bool IrrigationModule::get_globaleSperre()
-{
-    // gloable Freigaeb abrufen via KO
-    return _Sperre_Global;
-}
-
-
 void IrrigationModule::process_Temperatur_Wetterstation (float aktuelleTemperatur)
 {
     // Sinnvolle Plausigrenzen für Außentemperatur (Sensorfehler abfangen)

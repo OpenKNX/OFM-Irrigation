@@ -110,7 +110,7 @@
               <ComObject Id="%AID%_O-%TT%%CC%019" Name="Ch%C%Laufzeit"           Text="Zone %C%: Laufzeit [s]" FunctionText="Ausgang Laufzeit [s]"                          Number="%K10%" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-7-5" />
               <ComObject Id="%AID%_O-%TT%%CC%020" Name="Ch%C%Wasserbilanzkonto"  Text="Zone %C%: Wasserbilanzkonto" FunctionText="Ausgang Wasserbilanzkonto [mm]"           Number="%K11%" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-26" />
               
-              <!-- K12 reserved -->
+              <ComObject Id="%AID%_O-%TT%%CC%026" Name="Ch%C%LetzterBewaesserungstag" Text="Zone %C%: Letzter Bewässerungstag" FunctionText="Ausgang Letzter Bewässerungstag (Tag im Jahr)" Number="%K12%" ObjectSize="2 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-8-1" />
               <!-- K13 reserved -->
               <!-- K14 reserved -->
               <!-- K15 reserved -->
@@ -140,6 +140,7 @@
               <ComObjectRef Id="%AID%_O-%TT%%CC%023_R-%TT%%CC%02301" RefId="%AID%_O-%TT%%CC%023" />              <!-- Zone Ventilansteuerung -->
               <ComObjectRef Id="%AID%_O-%TT%%CC%024_R-%TT%%CC%02401" RefId="%AID%_O-%TT%%CC%024" />              <!-- Zone Bodenfeuchte -->
               <ComObjectRef Id="%AID%_O-%TT%%CC%025_R-%TT%%CC%02501" RefId="%AID%_O-%TT%%CC%025" />              <!-- Zonenstatus -->
+              <ComObjectRef Id="%AID%_O-%TT%%CC%026_R-%TT%%CC%02601" RefId="%AID%_O-%TT%%CC%026" />              <!-- Letzter Bewaesserungstag -->
             </ComObjectRefs>
           </Static>
 
@@ -236,6 +237,7 @@
                         <ComObjectRefRef RefId="%AID%_O-%TT%%CC%022_R-%TT%%CC%02201" />                    <!--  Diagnose_Bewaesserung_gesperrt -->
                         <ComObjectRefRef RefId="%AID%_O-%TT%%CC%023_R-%TT%%CC%02301" />                    <!-- Zone Ventilansteuerung -->
                         <ComObjectRefRef RefId="%AID%_O-%TT%%CC%025_R-%TT%%CC%02501" />                    <!-- Zonenstatus -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%026_R-%TT%%CC%02601" />                    <!-- Letzter Bewaesserungstag -->
 
                   </ParameterBlock>
                 </when>

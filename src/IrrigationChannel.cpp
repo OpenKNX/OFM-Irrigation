@@ -17,18 +17,6 @@ const std::string IrrigationChannel::name()
     return "IrrigationChannel";
 }
 
-uint16_t IrrigationChannel::getYearDay()
-{
-    if (!openknx.time.isValid())
-    {
-        return 0;
-    }
-
-    tm tmNow;
-    openknx.time.getLocalTime().toTm(tmNow);
-    return static_cast<uint16_t>(tmNow.tm_yday + 1);
-}
-
 // Bodenfeuchte-Wert gilt nur, wenn mindestens alle 24 h ein Telegramm kommt (Sensorausfall erkennen)
 static constexpr uint32_t BODENFEUCHTE_TIMEOUT_MS = 24UL * 60UL * 60UL * 1000UL;
 
@@ -216,6 +204,10 @@ bool IrrigationChannel::isActive()
 
 void IrrigationChannel::setKOInitialValues(void)
 {
+    // _letzterBewaesserungsTag wird nicht im Flash gespeichert, daher nach jedem Boot
+    // einmal explizit senden, damit die KO den Bus nicht mit einem veralteten Wert stehen laesst
+    KoIRR_ChLetzterBewaesserungstag.value(_letzterBewaesserungsTag, DPT_Value_2_Count);
+
     if (openknxIrrigationModule.debug())
     {
         logDebugP("[INIT] KO Initial Values gesetzt");
@@ -346,11 +338,6 @@ void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern
 }
 
 
-bool IrrigationChannel::get_lokaleSperre()
-{
-    return _Sperre_Zone;
-}
-
 // ============================================================
 // 3. Kultur-/Zonen-Evapotranspiration ETc
 // ============================================================
@@ -475,7 +462,6 @@ void IrrigationChannel::onStatusMagnetventilChanged(bool offen)
     KoIRR_ChBedarf.value(_Bewaesserungsbedarf, DPT_Switch);
 
     setZonenStatus(ZonenStatus::Abgeschlossen);
-    _letzterBewaesserungsTag = getYearDay();
     logDebugP("Kanal %u: Abgeschlossen, Konto final=%.2f", _channelIndex, _Wasserbilanzkonto);
 }
 
@@ -599,6 +585,16 @@ void IrrigationChannel::setZonenStatus(ZonenStatus status)
     if (_ZonenStatus == status) return;// Ausgabe nur wenn es sich ändert
 
     _ZonenStatus = status;
+
+    // Abgeschlossen oder Timeout: Zone ist fuer heute fertig (egal ueber welchen Pfad sie dahin kam).
+    // Nur bei echten Laufzeit-Uebergaengen werten, nicht beim Wiederherstellen des Status aus dem Flash
+    // in restore() - dort ist die Uhrzeit beim Booten noch nicht gueltig, getYearDay() wuerde 0 liefern.
+    if ((status == ZonenStatus::Abgeschlossen || status == ZonenStatus::TimeoutFehler) && openknx.time.isValid())
+    {
+        _letzterBewaesserungsTag = openknxIrrigationModule.getYearDay();
+        KoIRR_ChLetzterBewaesserungstag.value(_letzterBewaesserungsTag, DPT_Value_2_Count);
+    }
+
     String statusText = wandle_Zonenstatus_in_Text(_ZonenStatus);
     KoIRR_ChZonenStatus.value(statusText.c_str(), DPT_String_8859_1);
 }

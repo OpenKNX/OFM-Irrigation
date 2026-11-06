@@ -56,9 +56,7 @@ private:
     float calc_Zugefuehrte_Wassermenge(float laufzeit_sek, float niederschlagsrate_mm_h);
     float calc_Bodenwasserkonto_final(float Wasserbilanzkonto, float bewaesserung_mm, float nutzbareFeldkapazitaet);
     float calc_ETc(float ET0, uint8_t Kc);
-    bool get_lokaleSperre();
     bool istGesperrt(bool sperreGlobal);
-    uint16_t getYearDay();
     void setKOInitialValues(void);
     void setZonenStatus(ZonenStatus status);
 

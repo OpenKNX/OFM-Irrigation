@@ -81,6 +81,7 @@ private:
    
     bool hatOffenenBedarf() const;
     bool laeuftGerade() const;
+    char statusKuerzel() const; // Diagnose "irr win": I/W/L/R/A/T
     void starteBewaesserung(uint16_t maxLaufzeitMinuten = 0, bool sperreGlobal = false);
     void stoppeBewaesserung();
     void pruefeSperreWaehrendLauf(bool sperreGlobal);

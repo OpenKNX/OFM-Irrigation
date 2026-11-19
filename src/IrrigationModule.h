@@ -78,6 +78,8 @@ class IrrigationModule : public OpenKNX::Module
     bool _zeitfensterAktiv = false;
     bool _fensterBereitsGestartet = false; // verhindert Mehrfachstart innerhalb desselben Fensters
     bool _berechnungAusstehend = false;    // wird im Flash gespeichert
+    bool _diagImFenster = false;           // nur Diagnose "irr win": Stand der letzten Fensterpruefung
+    uint16_t _diagRestMinuten = 0;
 
     bool sindKompatibel(uint8_t zoneA, uint8_t zoneB);
     void pruefeUndStarteBewaesserungsfenster(void);

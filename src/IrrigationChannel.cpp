@@ -477,8 +477,25 @@ bool IrrigationChannel::laeuftGerade() const
     return _ZonenStatus == ZonenStatus::Laeuft || _ZonenStatus == ZonenStatus::WartetAufRueckmeldung;
 }
 
+char IrrigationChannel::statusKuerzel() const
+{
+    switch (_ZonenStatus)
+    {
+        case ZonenStatus::Inaktiv:               return 'I';
+        case ZonenStatus::WartetAufStart:        return 'W';
+        case ZonenStatus::Laeuft:                return 'L';
+        case ZonenStatus::WartetAufRueckmeldung: return 'R';
+        case ZonenStatus::Abgeschlossen:         return 'A';
+        case ZonenStatus::TimeoutFehler:         return 'T';
+        default:                                 return '?';
+    }
+}
+
 void IrrigationChannel::starteBewaesserung(uint16_t maxLaufzeitMinuten, bool sperreGlobal)
 {
+    // Ein inaktiver Kanal darf nie starten: seine loop() laeuft nicht, er bliebe fuer
+    // immer in "Laeuft" und wuerde das Bewaesserungsfenster dauerhaft offen halten.
+    if (!_channelActive) return;
     if (_ZonenStatus != ZonenStatus::WartetAufStart) return; // Schutz vor Fehlaufrufen
 
     // Sperren unmittelbar vor dem Start pruefen (koennen sich seit der Berechnung geaendert haben)

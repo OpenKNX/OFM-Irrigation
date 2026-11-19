@@ -135,6 +135,7 @@ void IrrigationModule::showHelp()
 {
     openknx.console.printHelpLine("IRR debug", "enable/disable debug mode");
     openknx.console.printHelpLine("IRR day", "show day and temperature diagnostics");
+    openknx.console.printHelpLine("IRR win", "show irrigation window and zone states");
 }
 
 // ============================================================
@@ -535,6 +536,64 @@ bool IrrigationModule::processCommand(const std::string command, bool diagnose)
             return true;
         }
 
+        // Fensterzustand und Zonenstatus. Zonen nur, wenn aktiv oder Status != Inaktiv.
+        // Status: I=Inaktiv W=WartetAufStart L=Laeuft R=WartAufRckmld A=Abgeschlossen T=TimeoutFehler
+        if (command == "irr win")
+        {
+            const bool timeValid = openknx.time.isValid();
+            unsigned int hh = 0, mm = 0;
+            if (timeValid)
+            {
+                tm tmNow;
+                openknx.time.getLocalTime().toTm(tmNow);
+                hh = tmNow.tm_hour;
+                mm = tmNow.tm_min;
+            }
+            const unsigned int start = ParamIRR_Bewaesserungsstart;
+            const unsigned int ende = ParamIRR_Bewaesserungsende;
+
+            if (diagnose)
+            {
+#ifdef BASE_KoDiagnose
+                // je Zeile max. 14 Zeichen (DPT 16), danach Leerzeile wie bei "irr day"
+                auto zeile = [](const char *format, auto... werte)
+                {
+                    openknx.console.writeDiagnoseKo(format, werte...);
+                    openknx.console.writeDiagnoseKo("");
+                };
+                zeile("%s", timeValid ? "TimeValid" : "TimeInvalid");
+                zeile("now %02u:%02u", hh, mm);
+                zeile("win %02u%02u-%02u%02u", start / 60, start % 60, ende / 60, ende % 60);
+                zeile("in %d rest %u", (int)_diagImFenster, (unsigned int)_diagRestMinuten);
+                zeile("aktiv %d gst %d", (int)_zeitfensterAktiv, (int)_fensterBereitsGestartet);
+                zeile("ausst %d", (int)_berechnungAusstehend);
+                for (uint8_t i = 0; i < IRR_ChannelCount; i++)
+                {
+                    if (_channels[i] == nullptr) continue;
+                    const char st = _channels[i]->statusKuerzel();
+                    if (_channels[i]->isActive() || st != 'I')
+                        zeile("Z%u a%d %c", (unsigned int)(i + 1), (int)_channels[i]->isActive(), st);
+                }
+#endif
+            }
+            else
+            {
+                logInfoP("time=%s now=%02u:%02u window=%02u:%02u-%02u:%02u inWindow=%d rest=%u min",
+                         timeValid ? "TimeValid" : "TimeInvalid", hh, mm, start / 60, start % 60, ende / 60, ende % 60,
+                         (int)_diagImFenster, (unsigned int)_diagRestMinuten);
+                logInfoP("zeitfensterAktiv=%d fensterBereitsGestartet=%d berechnungAusstehend=%d",
+                         (int)_zeitfensterAktiv, (int)_fensterBereitsGestartet, (int)_berechnungAusstehend);
+                for (uint8_t i = 0; i < IRR_ChannelCount; i++)
+                {
+                    if (_channels[i] == nullptr) continue;
+                    const char st = _channels[i]->statusKuerzel();
+                    if (_channels[i]->isActive() || st != 'I')
+                        logInfoP("zone %u active=%d status=%c", (unsigned int)(i + 1), (int)_channels[i]->isActive(), st);
+                }
+            }
+            return true;
+        }
+
         if (!diagnose && command == "irr debug")
         {
             _debug = !_debug;
@@ -620,6 +679,9 @@ void IrrigationModule::pruefeUndStarteBewaesserungsfenster(void)
         }
     }
 
+    _diagImFenster = imFenster;
+    _diagRestMinuten = restMinuten;
+
     // Fenster verlassen: naechster Eintritt ist ein neues Fenster
     if (!imFenster)
         _fensterBereitsGestartet = false;
@@ -653,7 +715,10 @@ void IrrigationModule::koordiniereZonenstart(uint16_t restMinuten)
 
     for (uint8_t i = 0; i < _numChannels; i++)
     {
-        if (_channels[i] == nullptr) continue;
+        // Inaktive Kanaele nicht beruecksichtigen: ihr Status kann aus dem Flash stammen
+        // (z. B. "WartetAufStart" aus der Zeit, als der Kanal noch aktiv war) und wuerde
+        // das Fenster sonst nie schliessen lassen.
+        if (_channels[i] == nullptr || !_channels[i]->isActive()) continue;
         if (_channels[i]->laeuftGerade()) { nochWelcheAmLaufen = true; continue; }
         if (!_channels[i]->hatOffenenBedarf()) continue;
 
@@ -663,7 +728,7 @@ void IrrigationModule::koordiniereZonenstart(uint16_t restMinuten)
         bool startenErlaubt = true;
         for (uint8_t j = 0; j < _numChannels; j++)
         {
-            if (j == i || _channels[j] == nullptr || !_channels[j]->laeuftGerade()) continue;
+            if (j == i || _channels[j] == nullptr || !_channels[j]->isActive() || !_channels[j]->laeuftGerade()) continue;
             if (!sindKompatibel(i + 1, j + 1)) { startenErlaubt = false; break; }
         }
 

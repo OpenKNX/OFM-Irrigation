@@ -20,6 +20,12 @@ const std::string IrrigationChannel::name()
 // Bodenfeuchte-Wert gilt nur, wenn mindestens alle 24 h ein Telegramm kommt (Sensorausfall erkennen)
 static constexpr uint32_t BODENFEUCHTE_TIMEOUT_MS = 24UL * 60UL * 60UL * 1000UL;
 
+// Laufzeit-KO (ETS: DPT 7.005 "Zeit (s)") mit DPT 7.001 beschreiben - auf dem Bus identisch
+// (vorzeichenlose 16 Bit). Grund: Die knx-Library rechnet DPT 7.002-7.007 ueber struct tm und
+// mktime() um, also in der lokalen Zeitzone, die OGM-Common per TZ setzt. In MEZ ergibt das
+// -3600 s: Laufzeiten unter 1 h werden gar nicht gesendet, groessere 3600 s zu klein.
+#define DPT_LAUFZEIT DPT_Value_2_Ucount // DPT 7.001 "Zeit (s)" - vorzeichenlos, 16 Bit
+
 // will be called once a KO received a telegram
 void IrrigationChannel::processInputKo(GroupObject &iKo)
 {
@@ -128,7 +134,7 @@ void IrrigationChannel::loop()
             const float mm = calc_Zugefuehrte_Wassermenge((float)laufSek, _Niederschlagsrate_Zone);
             _Wasserbilanzkonto = calc_Bodenwasserkonto_final(_Wasserbilanzkonto, mm, _nutzbareFeldkapazitaet_nFK_Zone);
             KoIRR_ChWasserbilanzkonto.value(_Wasserbilanzkonto, DPT_Value_Temp);
-            KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec);
+            KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_LAUFZEIT);
             setZonenStatus(ZonenStatus::Abgeschlossen);
             return;
         }
@@ -207,6 +213,7 @@ void IrrigationChannel::setKOInitialValues(void)
     // _letzterBewaesserungsTag wird nicht im Flash gespeichert, daher nach jedem Boot
     // einmal explizit senden, damit die KO den Bus nicht mit einem veralteten Wert stehen laesst
     KoIRR_ChLetzterBewaesserungstag.value(_letzterBewaesserungsTag, DPT_Value_2_Count);
+    KoIRR_ChZonenStatus.value(wandle_Zonenstatus_in_Text(_ZonenStatus).c_str(), DPT_String_8859_1); // Für Visu Zonenstatus senden
 
     if (openknxIrrigationModule.debug())
     {
@@ -330,7 +337,7 @@ void IrrigationChannel::process_Bewaesserungsberechnung_channel(float et0Gestern
     // Fehlmenge und Laufzeit immer senden (auch 0 bei keinem Bedarf / Sperre),
     // damit auf dem Bus keine veralteten Werte stehen bleiben
     KoIRR_ChFehlmenge.value(_ermittelteFehlmenge_mm, DPT_Value_Temp);
-    KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec);
+    KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_LAUFZEIT);
 
     logDebugP("Kanal %u: ETc_gestern=%.2f Konto=%.2f RegenHeute=%.2f Schwellwert[mm]=%.2f gesperrt=%d",
               _channelIndex, ETc_gestern, _Wasserbilanzkonto, regenHeuteAnrechnung, _Schwellwert_in_mm_Zone, _Diagnose_Bewaesserung_gesperrt);
@@ -530,7 +537,7 @@ void IrrigationChannel::starteBewaesserung(uint16_t maxLaufzeitMinuten, bool spe
         logDebugP("Kanal %u: Laufzeit gekuerzt %us -> %us (Fensterende)",
                   _channelIndex, _ermittelteLaufzeit_sekunden, (uint16_t)maxLaufzeitSekunden);
         _ermittelteLaufzeit_sekunden = (uint16_t)maxLaufzeitSekunden;
-        KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec);
+        KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_LAUFZEIT);
     }
 
     setZonenStatus(ZonenStatus::Laeuft);
@@ -551,7 +558,7 @@ void IrrigationChannel::stoppeBewaesserung()
         _ermittelteLaufzeit_sekunden = (uint16_t)laufSek; // Ist-Laufzeit, nicht die geplante
 
     KoIRR_ChVentilansteuerung.value(false, DPT_Switch);
-    KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_TimePeriodSec);
+    KoIRR_ChLaufzeit.value(_ermittelteLaufzeit_sekunden, DPT_LAUFZEIT);
     _rueckmeldungStartMillis = millis();
     setZonenStatus(ZonenStatus::WartetAufRueckmeldung);
     logInfoP("Kanal %u: Bewaesserung gestoppt nach %us", _channelIndex, _ermittelteLaufzeit_sekunden);
